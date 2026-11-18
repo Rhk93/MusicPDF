@@ -17,7 +17,7 @@ input,select{font:inherit;padding:8px;border-radius:10px;border:1px solid #ccc;m
 label{display:flex;gap:6px;align-items:center}
 .tabs{display:flex;gap:6px;margin:10px}.tabs button{flex:1;background:#fff;color:#334;padding:10px 4px}.tabs button.on{background:var(--c);color:#333}
 #stageWrap{margin:10px;overflow:auto;max-height:80vh;touch-action:pan-x pan-y;background:#e9e2d4;border-radius:10px}
-#page{position:relative;width:100%;background:#fff;box-shadow:0 2px 12px #0003;user-select:none;-webkit-user-select:none;overflow:hidden}
+#page{position:relative;width:100%;margin:0 auto;background:#fff;box-shadow:0 2px 12px #0003;user-select:none;-webkit-user-select:none;overflow:hidden}
 #page canvas.bgc{width:100%;display:block;pointer-events:none}
 .st{position:absolute;touch-action:none}
 .st img{width:100%;display:block;pointer-events:none}
@@ -54,17 +54,14 @@ footer{text-align:center;font-size:12px;color:#888;margin:20px}
 <div class="tabs hid" id="tabs"><button data-t="tImg" class="on">🖼 Immagini</button><button data-t="tNote">🎼 Nomi note</button><button data-t="tPage">📐 Foglio</button><button data-t="tSave">💾 Salva</button></div>
 
 <div class="card tab hid" id="tImg">
- <div class="row"><input id="q" placeholder="Cerca immagini…" style="flex:1"><button id="go">🔍</button></div>
- <div class="row"><input id="pxKey" type="password" placeholder="Chiave Pixabay (gratis)" style="flex:1"><button class="sec" id="pxSave">Salva chiave</button></div>
- <div class="small">Chiave gratuita: registrati su <a href="https://pixabay.com/api/docs/" target="_blank">pixabay.com/api/docs</a> e copia la "key". <span id="pxSt"></span></div>
- <label><input type="checkbox" id="bwPref" checked> Preferisci immagini da colorare (bianco e nero)</label>
- <div id="grid"></div><div class="small" id="srcNote"></div>
- <div class="row"><button class="sec" id="more">➕ Mostra altre 25</button><span id="pk" class="small"></span></div>
- <div class="row"><button class="sec" id="gImg">🌐 Cerca su Google Immagini</button><button class="sec" id="pasteClip">📋 Incolla immagine copiata</button></div>
- <div id="pasteZone" contenteditable="true" style="border:2px dashed #aaa;border-radius:10px;padding:10px;font-size:13px;color:#777;margin:6px 0">Su Google tieni premuto un'immagine → "Copia immagine", poi torna qui e premi "Incolla immagine copiata" (oppure tieni premuto qui e scegli "Incolla").</div>
- <div class="row"><button class="grn" id="pasteBtn">📌 Incolla nel foglio</button><label class="btn sec">🖼 Immagine mia<input type="file" id="myImg" accept="image/*" hidden></label></div>
+ <div class="row"><input id="q" placeholder="Cosa cercare su Google…" style="flex:1"><button id="gImg">🌐 Google Immagini</button></div>
+ <label><input type="checkbox" id="bwPref" checked> Cerca immagini da colorare (bianco e nero)</label>
+ <div class="row"><button class="sec" id="pasteClip">📋 Incolla immagine copiata</button><label class="btn sec">🖼 Immagine dal telefono<input type="file" id="myImg" accept="image/*" hidden></label></div>
+ <div id="pasteZone" contenteditable="true" style="border:2px dashed #aaa;border-radius:10px;padding:10px;font-size:13px;color:#777;margin:6px 0">Su Google tieni premuto un'immagine → "Copia immagine", torna qui e premi "Incolla immagine copiata" (oppure tieni premuto qui e scegli "Incolla").</div>
+ <b>Le tue immagini</b> <span id="pk" class="small"></span>
+ <div id="grid"></div>
+ <div class="row"><button class="grn" id="pasteBtn">📌 Incolla nel foglio</button></div>
 </div>
-
 <div class="card tab hid" id="tNote">
  <div class="row"><button class="grn" id="anCur">🎼 Scrivi i nomi (questa pagina)</button><button class="sec" id="anAll">Tutte le pagine</button></div>
  <div class="row">Nomi <select id="nNot"><option value="it">Do Re Mi</option><option value="en">C D E</option></select>
@@ -148,7 +145,7 @@ $('fIn').onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target.valu
   if(document.querySelectorAll('.tab:not(.hid)').length===0)$('tImg').classList.remove('hid');
   $('info').textContent=`${f.name} · ${S.pages.length} pagin${S.pages.length>1?'e':'a'}`;render();
   if(!t){toast('Leggo il titolo…',0);t=await ocrTitle(S.pages[0].bg).catch(()=>'')}
-  $('title').value=t;$('q').value=t;toast(t?'Titolo: '+t:'Titolo non trovato: scrivilo tu');if(t)search(false);
+  $('title').value=t;$('q').value=t;toast(t?'Titolo: '+t:'Titolo non trovato: scrivilo tu');
  }catch(err){toast('Errore: '+err.message,5000)}};
 async function addPage(c,ptW,ptH){S.pages.push({w:c.width,h:c.height,bg:c,ptW,ptH,st:[],lb:[],o:{c,ptW,ptH},T:{s:1,ox:0,oy:0}})}
 async function pdfTitle(pg){const tc=await pg.getTextContent(),vp=pg.getViewport({scale:1});
@@ -176,38 +173,15 @@ $('page').addEventListener('pointerdown',e=>{if(!boxMode)return;e.preventDefault
  const up=async()=>{pg.removeEventListener('pointermove',mv);pg.removeEventListener('pointerup',up);boxMode=false;bx.remove();
   const p=S.pages[S.cur],k=p.w/r.width,x0=Math.min(sx,ex)*k,y0=Math.min(sy,ey)*k,w=Math.abs(ex-sx)*k,h=Math.abs(ey-sy)*k;if(w<10||h<5)return toast('Riquadro troppo piccolo, riprova');
   toast('Leggo il titolo…',0);const t=await ocrBox(p.bg,x0,y0,w,h,false).catch(()=>'');
-  if(t){$('title').value=t;$('q').value=t;toast('Titolo: '+t);search(false)}else toast('Non riesco a leggerlo: scrivilo tu nel riquadro del titolo',4000)};
+  if(t){$('title').value=t;$('q').value=t;toast('Titolo: '+t)}else toast('Non riesco a leggerlo: scrivilo tu nel riquadro del titolo',4000)};
  pg.addEventListener('pointermove',mv);pg.addEventListener('pointerup',up)},true);
 $('title').oninput=()=>$('q').value=$('title').value;
 
 /* ---------- ricerca immagini ---------- */
-$('go').onclick=()=>search(false);$('more').onclick=()=>search(true);
-$('q').onkeydown=e=>{if(e.key==='Enter')search(false)};
-const isBW=x=>/colou?r|line|outline|drawing|sketch|disegn|clip|black|silhouette|svg|cartoon/i.test(x.t)?1:0;
-async function search(more){const t=$('q').value.trim();if(!t)return toast('Scrivi cosa cercare');
- if(!more){S.res=[];S.picked=[];S.qp=1;S.shown=0;$('grid').innerHTML=''}
- else if(S.shown<S.res.length)return showMore();
- else S.qp++;
- const bw=$('bwPref').checked;toast('Cerco immagini…',0);
- const words=t.split(/[\s,.;:\-–]+/).filter(w=>w.length>3),seen=new Set(S.res.map(x=>x.th));let r=[];
- const tries=[[t,bw],[t,false],...words.map(w=>[w,bw]),...words.map(w=>[w,false]),['note musicali',bw],['music notes',bw],['chitarra',bw],['musica',false]];
- for(const [q,b] of tries){(await getImgs(q,b)).forEach(x=>{if(!seen.has(x.th)){seen.add(x.th);r.push(x)}});if(r.length>=25)break}
- if(bw)r.sort((a,b)=>isBW(b)-isBW(a));
- S.res.push(...r);$('srcNote').textContent=S.res.length?'Immagini da '+(pxKey()?'Pixabay, ':'')+'Openverse e Wikimedia Commons':'';
- if(!r.length)return toast(more?'Non ci sono altre immagini':'Nessuna connessione? Prova "Cerca su Google Immagini"',3500);
- showMore()}
-function showMore(){const st=S.shown,end=Math.min(S.res.length,st+25);for(let i=st;i<end;i++)addThumb(S.res[i],i);S.shown=end;
- toast(`Visualizzate ${end} immagini: tocca quelle che ti piacciono`,2500);updPk()}
-async function getImgs(t,bw){const n=S.qp,out=[],key=pxKey();
- if(key){const px=(q,extra)=>fetch(`https://pixabay.com/api/?key=${encodeURIComponent(key)}&q=${encodeURIComponent(q.slice(0,95))}&lang=it&safesearch=true&per_page=50&page=${n}${extra}`).then(r=>{if(!r.ok)throw r.status;return r.json()}).then(j=>(j.hits||[]).forEach(h=>out.push({th:h.previewURL||h.webformatURL,big:h.webformatURL||h.largeImageURL,t:h.tags+(h.type==='vector/svg'||h.type==='illustration'?' drawing':'')}))).catch(e=>{if(e===400||e===401||e===403)toast('Chiave Pixabay non valida',4000)});
-  await Promise.all(bw?[px(t+' da colorare','&image_type=vector'),px(t,'&colors=grayscale'),px(t,'&image_type=illustration')]:[px(t,'&image_type=all')]);
-  if(out.length>=20)return out}
- const ov=fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(t+(bw?' coloring page':''))}&page_size=20&page=${n}`).then(r=>r.json()).then(j=>(j.results||[]).forEach(x=>x.thumbnail&&out.push({th:x.thumbnail,t:x.title||''}))).catch(()=>{});
- const cm=fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=20&gsroffset=${(n-1)*20}&gsrsearch=${encodeURIComponent(t+(bw?' drawing':'')+' filetype:bitmap|drawing')}&prop=imageinfo&iiprop=url&iiurlwidth=500`).then(r=>r.json()).then(j=>Object.values((j.query&&j.query.pages)||{}).forEach(p=>{const i=p.imageinfo&&p.imageinfo[0];if(i&&i.thumburl)out.push({th:i.thumburl,t:p.title})})).catch(()=>{});
- await Promise.all([ov,cm]);return out}
+$('q').onkeydown=e=>{if(e.key==='Enter')$('gImg').click()};
 function addThumb(x,i){const d=document.createElement('div'),im=new Image();im.loading='lazy';im.src=x.th;im.onerror=()=>d.remove();d.appendChild(im);
  d.onclick=()=>{const k=S.picked.indexOf(i);if(k<0){S.picked.push(i);d.classList.add('on')}else{S.picked.splice(k,1);d.classList.remove('on')}updPk()};$('grid').appendChild(d)}
-function updPk(){$('pk').textContent=S.picked.length?`Selezionate: ${S.picked.length}`:'Tocca le immagini per sceglierle'}
+function updPk(){$('pk').textContent=S.picked.length?`Selezionate: ${S.picked.length}`:'(tocca per selezionare / deselezionare)'}
 const cache={};
 async function loadImg(u){if(cache[u])return cache[u];const b=await(await fetch(u)).blob(),bm=await createImageBitmap(b),k=Math.min(1,900/Math.max(bm.width,bm.height)),c=mk(bm.width*k,bm.height*k);
  c.getContext('2d').drawImage(bm,0,0,c.width,c.height);return cache[u]=c}
@@ -225,7 +199,7 @@ function proc(o,mode,knock){const c=mk(o.width,o.height),x=c.getContext('2d');x.
    if(knock){const v=Math.min(a[k],a[k+1],a[k+2]);if(v>235)a[k+3]=0;else if(v>205)a[k+3]=Math.min(a[k+3],(235-v)/30*255)}}
  x.putImageData(d,0,0);return c}
 
-$('pasteBtn').onclick=()=>{if(!S.pages.length)return toast('Prima importa uno spartito');if(!S.picked.length)return toast('Tocca almeno un\'immagine');$('mP').style.display='flex'};
+$('pasteBtn').onclick=()=>{if(!S.pages.length)return toast('Prima importa uno spartito');if(!S.picked.length)return toast('Prima aggiungi o seleziona almeno un\'immagine');$('mP').style.display='flex'};
 $('pNo').onclick=()=>$('mP').style.display='none';
 $('pYes').onclick=async()=>{$('mP').style.display='none';const C=$('pC').checked,I=Math.max(0,+$('pI').value|0),W=+$('pS').value/100,all=$('pA').checked;
  const list=S.picked.map(i=>S.res[i]);let n=0,fail=0;toast('Incollo le immagini…',0);
@@ -233,12 +207,11 @@ $('pYes').onclick=async()=>{$('mP').style.display='none';const C=$('pC').checked
   if(C)sp.push([m,'t',W],[1-m-W,'t',W],[m,'b',W],[1-m-W,'b',W]);
   const rows=Math.ceil(I/3)||1,w2=W*.8;
   for(let k=0;k<I;k++){const r=Math.floor(k/3),cn=r===rows-1?I-r*3:3,c=k%3;sp.push([(c+.5)/cn-w2/2,.22+(r+.5)/rows*.56,w2])}
-  for(const [x,y,w] of sp){let o=null;for(let t=0;t<list.length&&!o;t++){const it=list[n++%list.length];o=await loadImg(it.big||it.th).catch(()=>null);if(!o&&it.big)o=await loadImg(it.th).catch(()=>null);if(!o)fail++}
+  for(const [x,y,w] of sp){let o=null;for(let t=0;t<list.length&&!o;t++){const it=list[n++%list.length];o=await loadImg(it.th).catch(()=>null);if(!o)fail++}
    if(!o)continue;const h=w*p.w*o.height/o.width/p.h,my=m*p.w/p.h;
    p.st.push(newSt(o,x,y==='t'?my:y==='b'?1-my-h:y-h/2,w))}}
  render();toast(fail?'Alcune immagini non si potevano scaricare, ho usato le altre':'Fatto! Trascinale dove vuoi')};
-$('myImg').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!S.pages.length)return toast('Prima importa uno spartito');
- const o=await loadImg(URL.createObjectURL(f)),s=newSt(o,.4,.4,.2);S.pages[S.cur].st.push(s);render();select(s)};
+$('myImg').onchange=e=>{const f=e.target.files[0];e.target.value='';addBlob(f)};
 
 /* ---------- disegno pagina ---------- */
 function render(){const p=S.pages[S.cur];if(!p)return;$('pgN').textContent=`Pagina ${S.cur+1} / ${S.pages.length}`;const pg=$('page');
@@ -361,12 +334,13 @@ $('vSave').onclick=()=>{$('mV').style.display='none';$('save').click()};
 /* ---------- Google Immagini + incolla ---------- */
 $('gImg').onclick=()=>{const t=$('q').value.trim()||$('title').value.trim();if(!t)return toast('Scrivi cosa cercare');
  window.open('https://www.google.com/search?tbm=isch&q='+encodeURIComponent(t+($('bwPref').checked?' disegno da colorare':'')),'_blank')};
-async function addBlob(b){if(!S.pages.length)return toast('Prima importa uno spartito');try{const o=await loadImg(URL.createObjectURL(b)),s=newSt(o,.4,.4,.2);S.pages[S.cur].st.push(s);render();select(s);toast('Immagine incollata: trascinala dove vuoi')}catch(e){toast('Immagine non valida')}}
+function addBlob(b){if(!b)return;const u=URL.createObjectURL(b),i=S.res.length;S.res.push({th:u});S.picked.push(i);addThumb(S.res[i],i);
+ $('grid').lastChild.classList.add('on');updPk();toast('Aggiunta! Premi "Incolla nel foglio" quando sei pronto')}
 $('pasteClip').onclick=async()=>{try{const it=await navigator.clipboard.read();for(const i of it){const ty=i.types.find(t=>t.startsWith('image/'));if(ty)return addBlob(await i.getType(ty))}toast('Negli appunti non c\'è un\'immagine: copiala da Google')}catch(e){toast('Tieni premuto nel riquadro tratteggiato e scegli "Incolla"',4500)}};
 document.addEventListener('paste',e=>{const f=[...((e.clipboardData&&e.clipboardData.items)||[])].find(i=>i.type.startsWith('image/'));if(f){e.preventDefault();addBlob(f.getAsFile())}});
 const pzT=$('pasteZone').innerHTML;
 $('pasteZone').addEventListener('input',async()=>{const z=$('pasteZone'),im=z.querySelector('img');z.innerHTML=pzT;if(!im)return;
- try{const b=await(await fetch(im.src)).blob();addBlob(b)}catch(e){toast('Questa immagine non si può prendere: usa "Salva immagine" e poi "Immagine mia"',5000)}});
+ try{addBlob(await(await fetch(im.src)).blob())}catch(e){toast('Questa immagine non si può prendere: salvala e usa "Immagine dal telefono"',5000)}});
 /* ---------- dimensione del foglio ---------- */
 const FMT={a4p:[595,842],a4l:[842,595],a3p:[842,1191],let:[612,792]};
 function resizePage(p,fmt,sc,al){const o=p.o,[pw,ph]=FMT[fmt]||[o.ptW,o.ptH],W=fmt==='orig'?o.c.width:1800,H=Math.round(W*ph/pw),ow=o.c.width,oh=o.c.height;
@@ -378,14 +352,9 @@ const rUpd=()=>{if(!S.pages.length)return toast('Prima importa uno spartito');$(
  (($('rAll').checked)?S.pages:[S.pages[S.cur]]).forEach(p=>resizePage(p,$('rF').value,$('rS').value/100,$('rA').value));select(null);render()};
 $('rS').oninput=()=>$('rSV').textContent=$('rS').value+'%';
 ['rS','rF','rA'].forEach(i=>$(i).onchange=rUpd);
-/* ---------- chiave Pixabay ---------- */
-function pxKey(){try{return localStorage.getItem('pxKey')||''}catch(e){return window._pxk||''}}
-function pxShow(){$('pxSt').textContent=pxKey()?'✔ Pixabay attivo':'(senza chiave cerco solo su Openverse e Wikimedia)';$('pxKey').value=pxKey()}
-$('pxSave').onclick=()=>{const k=$('pxKey').value.trim();try{localStorage.setItem('pxKey',k)}catch(e){window._pxk=k}pxShow();toast(k?'Chiave salvata ✔':'Chiave tolta');if(k&&$('q').value.trim())search(false)};
-pxShow();
 /* ---------- zoom con due dita ---------- */
 let Z=1,pz=null;const sw=$('stageWrap');
-function setZoom(z,cx,cy){const old=Z;Z=Math.max(1,Math.min(6,z));if(cx==null){cx=sw.clientWidth/2;cy=sw.clientHeight/2}
+function setZoom(z,cx,cy){const old=Z;Z=Math.max(.25,Math.min(6,z));if(cx==null){cx=sw.clientWidth/2;cy=sw.clientHeight/2}
  const px=(sw.scrollLeft+cx)/old,py=(sw.scrollTop+cy)/old;$('page').style.width=Z*100+'%';sw.scrollLeft=px*Z-cx;sw.scrollTop=py*Z-cy;
  $('zV').textContent=Math.round(Z*100)+'%';const p=S.pages[S.cur];if(p)p.lb.forEach(l=>l.el&&posLb(l))}
 sw.addEventListener('touchstart',e=>{if(e.touches.length===2){S.pinch=true;const[a,b]=e.touches;pz={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z:Z}}},{passive:true});
