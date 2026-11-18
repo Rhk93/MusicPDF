@@ -51,13 +51,15 @@ footer{text-align:center;font-size:12px;color:#888;margin:20px}
 <div id="nav" class="row hid" style="margin:0 10px;justify-content:center"><button class="sec" id="prev">◀</button><b id="pgN"></b><button class="sec" id="next">▶</button><button id="prevBtn2">👁 Anteprima</button></div>
 <div id="stageWrap" class="hid"><div id="page"></div></div>
 
-<div class="tabs hid" id="tabs"><button data-t="tImg" class="on">🖼 Immagini</button><button data-t="tNote">🎼 Nomi note</button><button data-t="tSave">💾 Salva</button></div>
+<div class="tabs hid" id="tabs"><button data-t="tImg" class="on">🖼 Immagini</button><button data-t="tNote">🎼 Nomi note</button><button data-t="tPage">📐 Foglio</button><button data-t="tSave">💾 Salva</button></div>
 
 <div class="card tab hid" id="tImg">
  <div class="row"><input id="q" placeholder="Cerca immagini…" style="flex:1"><button id="go">🔍</button></div>
  <label><input type="checkbox" id="bwPref" checked> Preferisci immagini da colorare (bianco e nero)</label>
  <div id="grid"></div>
  <div class="row"><button class="sec" id="more">➕ Altre immagini</button><span id="pk" class="small"></span></div>
+ <div class="row"><button class="sec" id="gImg">🌐 Cerca su Google Immagini</button><button class="sec" id="pasteClip">📋 Incolla immagine copiata</button></div>
+ <div id="pasteZone" contenteditable="true" style="border:2px dashed #aaa;border-radius:10px;padding:10px;font-size:13px;color:#777;margin:6px 0">Su Google tieni premuto un'immagine → "Copia immagine", poi torna qui e premi "Incolla immagine copiata" (oppure tieni premuto qui e scegli "Incolla").</div>
  <div class="row"><button class="grn" id="pasteBtn">📌 Incolla nel foglio</button><label class="btn sec">🖼 Immagine mia<input type="file" id="myImg" accept="image/*" hidden></label></div>
 </div>
 
@@ -73,6 +75,13 @@ footer{text-align:center;font-size:12px;color:#888;margin:20px}
  <p class="small">Il riconoscimento è automatico ma non perfetto: tocca un nome per correggerlo o eliminarlo, trascinalo per spostarlo.</p>
 </div>
 
+<div class="card tab hid" id="tPage">
+ <div class="row">Formato <select id="rF"><option value="orig">Originale</option><option value="a4p">A4 verticale</option><option value="a4l">A4 orizzontale</option><option value="a3p">A3 verticale</option><option value="let">Lettera</option></select></div>
+ <div class="row">Grandezza spartito <input type="range" id="rS" min="30" max="100" value="100" style="flex:1"><b id="rSV">100%</b></div>
+ <div class="row">Posizione <select id="rA"><option value="c">Al centro</option><option value="t">In alto</option><option value="b">In basso</option></select></div>
+ <label><input type="checkbox" id="rAll" checked> Tutte le pagine</label>
+ <p class="small">Rimpicciolisci lo spartito per lasciare spazio alle immagini intorno. I nomi delle note si spostano insieme allo spartito.</p>
+</div>
 <div class="card tab hid" id="tSave">
  <div class="row">Formato <select id="fmt"><option value="pdf">PDF</option><option value="png">PNG</option><option value="jpg">JPG</option><option value="webp">WEBP</option></select>
   Pagine <select id="pgs"><option value="all">Tutte</option><option value="cur">Solo questa</option></select></div>
@@ -139,7 +148,7 @@ $('fIn').onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target.valu
   if(!t){toast('Leggo il titolo…',0);t=await ocrTitle(S.pages[0].bg).catch(()=>'')}
   $('title').value=t;$('q').value=t;toast(t?'Titolo: '+t:'Titolo non trovato: scrivilo tu');if(t)search(false);
  }catch(err){toast('Errore: '+err.message,5000)}};
-async function addPage(c,ptW,ptH){S.pages.push({w:c.width,h:c.height,bg:c,ptW,ptH,st:[],lb:[]})}
+async function addPage(c,ptW,ptH){S.pages.push({w:c.width,h:c.height,bg:c,ptW,ptH,st:[],lb:[],o:{c,ptW,ptH},T:{s:1,ox:0,oy:0}})}
 async function pdfTitle(pg){const tc=await pg.getTextContent(),vp=pg.getViewport({scale:1});
  let it=tc.items.filter(i=>i.str&&i.str.trim()).map(i=>{const t=pdfjsLib.Util.transform(vp.transform,i.transform);return{s:i.str,z:Math.hypot(t[2],t[3]),y:t[5]}}).filter(i=>i.y<vp.height*.45);
  if(!it.length)return'';const mx=Math.max(...it.map(i=>i.z));
@@ -176,10 +185,12 @@ const isBW=x=>/colou?r|line|outline|drawing|sketch|disegn|clip|black|silhouette|
 async function search(more){const t=$('q').value.trim();if(!t)return toast('Scrivi cosa cercare');
  if(!more){S.res=[];S.picked=[];S.qp=1;$('grid').innerHTML=''}else S.qp++;
  const bw=$('bwPref').checked;toast('Cerco immagini…',0);
- let r=await getImgs(t,bw);if(!r.length&&bw)r=await getImgs(t,false);
+ const words=t.split(/[\s,.;:\-–]+/).filter(w=>w.length>3),seen=new Set(S.res.map(x=>x.th));let r=[];
+ const tries=[[t,bw],[t,false],...words.map(w=>[w,bw]),...words.map(w=>[w,false]),['note musicali',bw],['music notes',bw],['chitarra',bw],['musica',false]];
+ for(const [q,b] of tries){(await getImgs(q,b)).forEach(x=>{if(!seen.has(x.th)){seen.add(x.th);r.push(x)}});if(r.length>=16)break}
  if(bw)r.sort((a,b)=>isBW(b)-isBW(a));
  const st=S.res.length;S.res.push(...r);r.forEach((x,i)=>addThumb(x,st+i));
- toast(r.length?r.length+' immagini trovate: tocca quelle che ti piacciono':'Nessuna immagine: prova altre parole',3500);updPk()}
+ toast(r.length?r.length+' immagini trovate: tocca quelle che ti piacciono':'Nessuna connessione? Prova "Cerca su Google Immagini"',3500);updPk()}
 async function getImgs(t,bw){const n=S.qp,out=[];
  const ov=fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(t+(bw?' coloring page':''))}&page_size=20&page=${n}`).then(r=>r.json()).then(j=>(j.results||[]).forEach(x=>x.thumbnail&&out.push({th:x.thumbnail,t:x.title||''}))).catch(()=>{});
  const cm=fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=20&gsroffset=${(n-1)*20}&gsrsearch=${encodeURIComponent(t+(bw?' drawing':'')+' filetype:bitmap|drawing')}&prop=imageinfo&iiprop=url&iiurlwidth=500`).then(r=>r.json()).then(j=>Object.values((j.query&&j.query.pages)||{}).forEach(p=>{const i=p.imageinfo&&p.imageinfo[0];if(i&&i.thumburl)out.push({th:i.thumburl,t:p.title})})).catch(()=>{});
@@ -337,6 +348,26 @@ $('prevBtn').onclick=$('prevBtn2').onclick=()=>{if(!S.pages.length)return toast(
 $('vPrev').onclick=()=>{if(vI>0){vI--;showPrev()}};$('vNext').onclick=()=>{if(vI<S.pages.length-1){vI++;showPrev()}};
 $('vClose').onclick=()=>$('mV').style.display='none';
 $('vSave').onclick=()=>{$('mV').style.display='none';$('save').click()};
+/* ---------- Google Immagini + incolla ---------- */
+$('gImg').onclick=()=>{const t=$('q').value.trim()||$('title').value.trim();if(!t)return toast('Scrivi cosa cercare');
+ window.open('https://www.google.com/search?tbm=isch&q='+encodeURIComponent(t+($('bwPref').checked?' disegno da colorare':'')),'_blank')};
+async function addBlob(b){if(!S.pages.length)return toast('Prima importa uno spartito');try{const o=await loadImg(URL.createObjectURL(b)),s=newSt(o,.4,.4,.2);S.pages[S.cur].st.push(s);render();select(s);toast('Immagine incollata: trascinala dove vuoi')}catch(e){toast('Immagine non valida')}}
+$('pasteClip').onclick=async()=>{try{const it=await navigator.clipboard.read();for(const i of it){const ty=i.types.find(t=>t.startsWith('image/'));if(ty)return addBlob(await i.getType(ty))}toast('Negli appunti non c\'è un\'immagine: copiala da Google')}catch(e){toast('Tieni premuto nel riquadro tratteggiato e scegli "Incolla"',4500)}};
+document.addEventListener('paste',e=>{const f=[...((e.clipboardData&&e.clipboardData.items)||[])].find(i=>i.type.startsWith('image/'));if(f){e.preventDefault();addBlob(f.getAsFile())}});
+const pzT=$('pasteZone').innerHTML;
+$('pasteZone').addEventListener('input',async()=>{const z=$('pasteZone'),im=z.querySelector('img');z.innerHTML=pzT;if(!im)return;
+ try{const b=await(await fetch(im.src)).blob();addBlob(b)}catch(e){toast('Questa immagine non si può prendere: usa "Salva immagine" e poi "Immagine mia"',5000)}});
+/* ---------- dimensione del foglio ---------- */
+const FMT={a4p:[595,842],a4l:[842,595],a3p:[842,1191],let:[612,792]};
+function resizePage(p,fmt,sc,al){const o=p.o,[pw,ph]=FMT[fmt]||[o.ptW,o.ptH],W=fmt==='orig'?o.c.width:1800,H=Math.round(W*ph/pw),ow=o.c.width,oh=o.c.height;
+ const s=Math.min(W/ow,H/oh)*sc,dw=ow*s,dh=oh*s,ox=(W-dw)/2,mg=Math.min((H-dh)/2,H*.04),oy=al==='t'?mg:al==='b'?H-dh-mg:(H-dh)/2,c=mk(W,H);
+ c.getContext('2d').drawImage(o.c,ox,oy,dw,dh);const T=p.T,f=s/T.s,mx=v=>ox+(v-T.ox)*f,my=v=>oy+(v-T.oy)*f;
+ for(const l of p.lb){l.x=mx(l.x*p.w)/W;l.y=my(l.y*p.h)/c.height;l.cy=my(l.cy);l.bot=my(l.bot);l.low=my(l.low);l.d*=f;l.sz*=f}
+ p.bg=c;p.w=W;p.h=c.height;p.ptW=pw;p.ptH=ph;p.T={s,ox,oy}}
+const rUpd=()=>{if(!S.pages.length)return toast('Prima importa uno spartito');$('rSV').textContent=$('rS').value+'%';
+ (($('rAll').checked)?S.pages:[S.pages[S.cur]]).forEach(p=>resizePage(p,$('rF').value,$('rS').value/100,$('rA').value));select(null);render()};
+$('rS').oninput=()=>$('rSV').textContent=$('rS').value+'%';
+['rS','rF','rA'].forEach(i=>$(i).onchange=rUpd);
 updPk();
 </script>
 </body></html>
