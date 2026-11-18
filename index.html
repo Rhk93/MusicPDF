@@ -59,7 +59,7 @@ footer{text-align:center;font-size:12px;color:#888;margin:20px}
  <div class="small">Chiave gratuita: registrati su <a href="https://pixabay.com/api/docs/" target="_blank">pixabay.com/api/docs</a> e copia la "key". <span id="pxSt"></span></div>
  <label><input type="checkbox" id="bwPref" checked> Preferisci immagini da colorare (bianco e nero)</label>
  <div id="grid"></div><div class="small" id="srcNote"></div>
- <div class="row"><button class="sec" id="more">➕ Altre immagini</button><span id="pk" class="small"></span></div>
+ <div class="row"><button class="sec" id="more">➕ Mostra altre 25</button><span id="pk" class="small"></span></div>
  <div class="row"><button class="sec" id="gImg">🌐 Cerca su Google Immagini</button><button class="sec" id="pasteClip">📋 Incolla immagine copiata</button></div>
  <div id="pasteZone" contenteditable="true" style="border:2px dashed #aaa;border-radius:10px;padding:10px;font-size:13px;color:#777;margin:6px 0">Su Google tieni premuto un'immagine → "Copia immagine", poi torna qui e premi "Incolla immagine copiata" (oppure tieni premuto qui e scegli "Incolla").</div>
  <div class="row"><button class="grn" id="pasteBtn">📌 Incolla nel foglio</button><label class="btn sec">🖼 Immagine mia<input type="file" id="myImg" accept="image/*" hidden></label></div>
@@ -185,16 +185,21 @@ $('go').onclick=()=>search(false);$('more').onclick=()=>search(true);
 $('q').onkeydown=e=>{if(e.key==='Enter')search(false)};
 const isBW=x=>/colou?r|line|outline|drawing|sketch|disegn|clip|black|silhouette|svg|cartoon/i.test(x.t)?1:0;
 async function search(more){const t=$('q').value.trim();if(!t)return toast('Scrivi cosa cercare');
- if(!more){S.res=[];S.picked=[];S.qp=1;$('grid').innerHTML=''}else S.qp++;
+ if(!more){S.res=[];S.picked=[];S.qp=1;S.shown=0;$('grid').innerHTML=''}
+ else if(S.shown<S.res.length)return showMore();
+ else S.qp++;
  const bw=$('bwPref').checked;toast('Cerco immagini…',0);
  const words=t.split(/[\s,.;:\-–]+/).filter(w=>w.length>3),seen=new Set(S.res.map(x=>x.th));let r=[];
  const tries=[[t,bw],[t,false],...words.map(w=>[w,bw]),...words.map(w=>[w,false]),['note musicali',bw],['music notes',bw],['chitarra',bw],['musica',false]];
- for(const [q,b] of tries){(await getImgs(q,b)).forEach(x=>{if(!seen.has(x.th)){seen.add(x.th);r.push(x)}});if(r.length>=16)break}
+ for(const [q,b] of tries){(await getImgs(q,b)).forEach(x=>{if(!seen.has(x.th)){seen.add(x.th);r.push(x)}});if(r.length>=25)break}
  if(bw)r.sort((a,b)=>isBW(b)-isBW(a));
- const st=S.res.length;S.res.push(...r);r.forEach((x,i)=>addThumb(x,st+i));$('srcNote').textContent=S.res.length?'Immagini da '+(pxKey()?'Pixabay, ':'')+'Openverse e Wikimedia Commons':'';
- toast(r.length?r.length+' immagini trovate: tocca quelle che ti piacciono':'Nessuna connessione? Prova "Cerca su Google Immagini"',3500);updPk()}
+ S.res.push(...r);$('srcNote').textContent=S.res.length?'Immagini da '+(pxKey()?'Pixabay, ':'')+'Openverse e Wikimedia Commons':'';
+ if(!r.length)return toast(more?'Non ci sono altre immagini':'Nessuna connessione? Prova "Cerca su Google Immagini"',3500);
+ showMore()}
+function showMore(){const st=S.shown,end=Math.min(S.res.length,st+25);for(let i=st;i<end;i++)addThumb(S.res[i],i);S.shown=end;
+ toast(`Visualizzate ${end} immagini: tocca quelle che ti piacciono`,2500);updPk()}
 async function getImgs(t,bw){const n=S.qp,out=[],key=pxKey();
- if(key){const px=(q,extra)=>fetch(`https://pixabay.com/api/?key=${encodeURIComponent(key)}&q=${encodeURIComponent(q.slice(0,95))}&lang=it&safesearch=true&per_page=200&page=${n}${extra}`).then(r=>{if(!r.ok)throw r.status;return r.json()}).then(j=>(j.hits||[]).forEach(h=>out.push({th:h.webformatURL||h.previewURL,big:h.largeImageURL||h.webformatURL,t:h.tags+(h.type==='vector/svg'||h.type==='illustration'?' drawing':'')}))).catch(e=>{if(e===400||e===401||e===403)toast('Chiave Pixabay non valida',4000)});
+ if(key){const px=(q,extra)=>fetch(`https://pixabay.com/api/?key=${encodeURIComponent(key)}&q=${encodeURIComponent(q.slice(0,95))}&lang=it&safesearch=true&per_page=50&page=${n}${extra}`).then(r=>{if(!r.ok)throw r.status;return r.json()}).then(j=>(j.hits||[]).forEach(h=>out.push({th:h.previewURL||h.webformatURL,big:h.webformatURL||h.largeImageURL,t:h.tags+(h.type==='vector/svg'||h.type==='illustration'?' drawing':'')}))).catch(e=>{if(e===400||e===401||e===403)toast('Chiave Pixabay non valida',4000)});
   await Promise.all(bw?[px(t+' da colorare','&image_type=vector'),px(t,'&colors=grayscale'),px(t,'&image_type=illustration')]:[px(t,'&image_type=all')]);
   if(out.length>=20)return out}
  const ov=fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(t+(bw?' coloring page':''))}&page_size=20&page=${n}`).then(r=>r.json()).then(j=>(j.results||[]).forEach(x=>x.thumbnail&&out.push({th:x.thumbnail,t:x.title||''}))).catch(()=>{});
