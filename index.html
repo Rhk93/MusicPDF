@@ -6,17 +6,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root{--a:#ff6b6b;--b:#4d96ff;--c:#ffd93d;--d:#3fb950;--bg:#fff8ec}
-*{box-sizing:border-box}body{margin:0;font-family:Fredoka,system-ui,sans-serif;background:var(--bg);color:#2b2b2b;padding-bottom:200px}
+:root{--a:#ff6b6b;--b:#4d96ff;--c:#ffd93d;--d:#3fb950;--bg:#fff8ec;--card:#fff;--tx:#2b2b2b;--soft:#eef2ff}
+body.t-notte{--a:#ff7eb6;--b:#7aa2ff;--c:#c9a7ff;--d:#4fd1a5;--bg:#12131c;--card:#1e2030;--tx:#e8e8f0;--soft:#2b2e45}
+body.t-pastello{--a:#f7a8b8;--b:#9ec9f5;--c:#fde2a7;--d:#a8e6cf;--bg:#fdf6ff;--card:#fff;--tx:#4a4a5a;--soft:#f1ecff}
+body.t-natale{--a:#d62828;--b:#1b7a3e;--c:#f4c430;--d:#2a9d50;--bg:#fff5f0;--card:#fff;--tx:#3b1f1f;--soft:#fde7e3}
+body.t-oceano{--a:#00a6c8;--b:#0466c8;--c:#7ae7ff;--d:#00b894;--bg:#eef9ff;--card:#fff;--tx:#0b2840;--soft:#dff1fb}
+body.t-bosco{--a:#e07a5f;--b:#3d7a4f;--c:#f2cc8f;--d:#81b29a;--bg:#f4f1e8;--card:#fffdf7;--tx:#2f3e2f;--soft:#e9efe3}
+*{box-sizing:border-box}body{margin:0;font-family:Fredoka,system-ui,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:200px}
 header{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;padding:12px 16px;font-size:22px;font-weight:700;position:sticky;top:0;z-index:20}
-.card{background:#fff;margin:10px;border-radius:16px;padding:12px;box-shadow:0 2px 8px #0001}
+.card{background:var(--card);margin:10px;border-radius:16px;padding:12px;box-shadow:0 2px 8px #0001}
 button,.btn{font:inherit;border:0;border-radius:12px;padding:10px 14px;background:var(--b);color:#fff;font-weight:600;cursor:pointer;display:inline-block}
-button.sec,.btn.sec{background:#eef2ff;color:#334}button.red{background:var(--a)}button.grn{background:var(--d)}
-input,select{font:inherit;padding:8px;border-radius:10px;border:1px solid #ccc;max-width:100%}
+button.sec,.btn.sec{background:var(--soft);color:var(--tx)}button.red{background:var(--a)}button.grn{background:var(--d)}
+input,select{background:var(--card);color:var(--tx);font:inherit;padding:8px;border-radius:10px;border:1px solid #ccc;max-width:100%}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
 label{display:flex;gap:6px;align-items:center}
-.tabs{display:flex;gap:6px;margin:10px}.tabs button{flex:1;background:#fff;color:#334;padding:10px 4px}.tabs button.on{background:var(--c);color:#333}
-#stageWrap{margin:10px;overflow:auto;max-height:80vh;touch-action:pan-x pan-y;background:#e9e2d4;border-radius:10px}
+.tabs{display:flex;gap:6px;margin:10px}.tabs button{flex:1;background:var(--card);color:var(--tx);padding:10px 4px}.tabs button.on{background:var(--c);color:#333}
+#stageWrap{margin:10px;overflow:auto;max-height:70vh;touch-action:none;cursor:grab;background:#e9e2d4;border-radius:10px}
 #page{position:relative;width:100%;margin:0 auto;background:#fff;box-shadow:0 2px 12px #0003;user-select:none;-webkit-user-select:none;overflow:hidden}
 #page canvas.bgc{width:100%;display:block;pointer-events:none}
 .st{position:absolute;touch-action:none}
@@ -31,7 +36,7 @@ label{display:flex;gap:6px;align-items:center}
 #grid div.on{border-color:var(--d)}
 #grid img{width:100%;height:100%;object-fit:contain}
 #grid div.on::after{content:'✔';position:absolute;top:2px;right:6px;color:var(--d);font-size:22px;font-weight:700}
-#tb{position:fixed;left:0;right:0;bottom:0;background:#fff;box-shadow:0 -2px 12px #0003;padding:10px;z-index:30;display:none;border-radius:16px 16px 0 0}
+#tb{position:fixed;left:0;right:0;bottom:0;background:var(--card);box-shadow:0 -2px 12px #0003;padding:10px;z-index:30;display:none;border-radius:16px 16px 0 0}
 .modal{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;z-index:50}
 .modal .card{max-width:380px;width:92%}
 #toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);background:#333;color:#fff;padding:10px 16px;border-radius:20px;display:none;z-index:60;max-width:90%;text-align:center}
@@ -40,7 +45,7 @@ label{display:flex;gap:6px;align-items:center}
 footer{text-align:center;font-size:12px;color:#888;margin:20px}
 </style></head>
 <body>
-<header>🎵 MusicPDF</header>
+<header style="display:flex;align-items:center;justify-content:space-between;gap:8px">🎵 MusicPDF<select id="theme" style="font-size:14px;padding:4px 6px"><option value="">🎨 Classico</option><option value="notte">🌙 Notte</option><option value="pastello">🍬 Pastello</option><option value="natale">🎄 Natale</option><option value="oceano">🌊 Oceano</option><option value="bosco">🌿 Bosco</option></select></header>
 
 <div class="card">
  <div class="row"><label class="btn">📂 Importa PDF o immagine<input type="file" id="fIn" accept="application/pdf,image/*" hidden></label></div>
@@ -253,43 +258,125 @@ const NM={it:['Do','Re','Mi','Fa','Sol','La','Si'],en:['C','D','E','F','G','A','
 function lbText(l){if(l.custom!=null)return l.custom;const cl=L.clef==='p'?(l.si%2?'f':'g'):L.clef,idx=(((cl==='g'?2:4)+l.step)%7+7)%7;let t=NM[L.not][idx];
  if(L.key>0&&SH.slice(0,L.key).includes(idx))t+='♯';if(L.key<0&&FL.slice(0,-L.key).includes(idx))t+='♭';return t}
 function layout(p){for(const l of p.lb){if(l.moved)continue;const y=L.pos==='staff'?Math.max(l.bot+1.3*l.d,l.low+.9*l.d)+l.stack*l.sz*L.sz*1.05:l.cy+.6*l.d;l.y=y/p.h}}
-function fillHoles(M,W,H,d){const N=W*H,lab=new Int32Array(N),st=new Int32Array(N),mx=.8*d*d,mn=.04*d*d,area=[0],edge=[0];let id=0;
- for(let s=0;s<N;s++){if(M[s]||lab[s])continue;id++;let a=0,e=0,sp=0;st[sp++]=s;lab[s]=id;
-  while(sp){const i=st[--sp];a++;const x=i%W,y=(i/W)|0;if(x===0||y===0||x===W-1||y===H-1)e=1;
+function fillHoles(M,W,H,d,bad){const N=W*H,lab=new Int32Array(N),st=new Int32Array(N),mx=.8*d*d,mn=.04*d*d,good=[0];let id=0;
+ const vrun=(x,y,dy)=>{let n=0;while(y>=0&&y<H&&M[y*W+x]){n++;y+=dy}return n};
+ const vrunW=(x,y,dy)=>{let n=0;while(y>=0&&y<H&&x>0&&x<W-1){if(M[y*W+x]){}else if(M[y*W+x-1])x--;else if(M[y*W+x+1])x++;else break;n++;y+=dy}return[n,x]};
+ const stroke=(x,ya,yb)=>{let best=0;for(let k=0;k<3;k++){const xx=x+k*(x<0?0:1);for(const yy of [ya,yb,(ya+yb)>>1]){if(xx<0||xx>=W||!M[yy*W+xx])continue;const up=vrun(xx,yy,-1),dn=vrun(xx,yy,1);best=Math.max(best,Math.max(yy-up+1<ya-d*.8?1:0,yy+dn-1>yb+d*.8?1:0))}}return best};
+ for(let s=0;s<N;s++){if(M[s]||lab[s])continue;id++;let a=0,e=0,sp=0,x0=W,x1=0,y0=H,y1=0;st[sp++]=s;lab[s]=id;
+  while(sp){const i=st[--sp];a++;const x=i%W,y=(i/W)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;if(x===0||y===0||x===W-1||y===H-1||(bad&&!e&&bad(x,y)))e=1;
    if(x>0&&!M[i-1]&&!lab[i-1]){lab[i-1]=id;st[sp++]=i-1}
    if(x<W-1&&!M[i+1]&&!lab[i+1]){lab[i+1]=id;st[sp++]=i+1}
    if(y>0&&!M[i-W]&&!lab[i-W]){lab[i-W]=id;st[sp++]=i-W}
    if(y<H-1&&!M[i+W]&&!lab[i+W]){lab[i+W]=id;st[sp++]=i+W}}
-  area.push(a);edge.push(e)}
- for(let i=0;i<N;i++)if(!M[i]){const k=lab[i];if(!edge[k]&&area[k]<mx&&area[k]>mn)M[i]=1}}
-function analyze(p){const W=p.w,H=p.h,src=p.bg.getContext('2d').getImageData(0,0,W,H).data,B=new Uint8Array(W*H);
- for(let i=0;i<W*H;i++){const k=i*4,a=src[k+3]/255,g=(.3*src[k]+.59*src[k+1]+.11*src[k+2])*a+255*(1-a);B[i]=g<150?1:0}
- const rc=new Int32Array(H);let mx=0;for(let y=0;y<H;y++){let c=0;const o=y*W;for(let x=0;x<W;x++)c+=B[o+x];rc[y]=c;if(c>mx)mx=c}
- const th=mx*.45,lines=[];for(let y=0;y<H;y++)if(rc[y]>th){let e=y;while(e+1<H&&rc[e+1]>th)e++;lines.push({t:y,b:e,y:(y+e)/2});y=e}
- const staves=[];for(let i=0;i+4<lines.length;){const g=[];for(let j=0;j<4;j++)g.push(lines[i+j+1].y-lines[i+j].y);const av=g.reduce((a,b)=>a+b)/4;
-  if(av>4&&av>2.5*(lines[i].b-lines[i].t+1)&&g.every(v=>Math.abs(v-av)<av*.25)){staves.push(lines.slice(i,i+5));i+=5}else i++}
- const notes=[];
- staves.forEach((L5,si)=>{const d=(L5[4].y-L5[0].y)/4,top=L5[0].y,bot=L5[4].y,yr=Math.round(L5[2].y);
-  let x0=0,x1=0,best=0;for(let x=0;x<W;){const dk=X=>B[yr*W+X]||B[(yr-1)*W+X]||B[(yr+1)*W+X];if(dk(x)){let e=x;while(e+1<W&&dk(e+1))e++;if(e-x>best){best=e-x;x0=x;x1=e}x=e+1}else x++}
-  const y0=Math.max(0,Math.round(top-4*d)),y1=Math.min(H-1,Math.round(bot+4*d)),bh=y1-y0+1,M=new Uint8Array(W*bh);
+  let g=!e&&a<mx&&a>mn&&(x1-x0)<d*1.3&&(y1-y0)<d*.9;
+  if(g){const xc=(x0+x1)>>1,vg=(y,dy)=>{let k=0;while(k<5&&y>=0&&y<H&&!M[y*W+xc]){y+=dy;k++}return y>=0&&y<H?vrun(xc,y,dy):0};if(vg(y0-1,-1)>=d*.55||vg(y1+1,1)>=d*.55)g=false}
+  if(g){const L=[x0-1,x0-2,x0-3].some(x=>x>=0&&stroke2(x)),R=[x1+1,x1+2,x1+3].some(x=>x<W&&stroke2(x));function thin(x,r){if(r<0||r>=H)return false;if(!M[r*W+x]){if(x>0&&M[r*W+x-1])x--;else if(x<W-1&&M[r*W+x+1])x++;else return false}let l=x,q=x;while(l>0&&M[r*W+l-1])l--;while(q<W-1&&M[r*W+q+1])q++;return q-l+1<=Math.max(3,d*.42)}function stroke2(x){for(const yy of [y0,y1,(y0+y1)>>1]){if(!M[yy*W+x])continue;const up=vrunW(x,yy,-1)[0],dn=vrunW(x,yy,1)[0];if((yy-up+1<y0-d*.35&&thin(x,Math.round(y0-d*.25)))||(yy+dn-1>y1+d*.35&&thin(x,Math.round(y1+d*.25))))return true}return false}if(L&&R)g=false}
+  good.push(g?1:0)}
+ for(let i=0;i<N;i++)if(!M[i]&&good[lab[i]])M[i]=1}
+function otsu(G){const h=new Array(256).fill(0);for(let i=0;i<G.length;i+=3)h[G[i]]++;let tot=0,sum=0;for(let i=0;i<256;i++){tot+=h[i];sum+=i*h[i]}
+ let sB=0,wB=0,best=0,th=150;for(let i=0;i<256;i++){wB+=h[i];if(!wB)continue;const wF=tot-wB;if(!wF)break;sB+=i*h[i];const mB=sB/wB,mF=(sum-sB)/wF,v=wB*wF*(mB-mF)*(mB-mF);if(v>best){best=v;th=i}}
+ return Math.max(100,Math.min(200,th))}
+function skewOf(B,W,H){const P=[];for(let y=0;y<H;y++)for(let x=0;x<W;x+=3)if(B[y*W+x])P.push(x-W/2,y);
+ const prof=new Float64Array(H*2);let best=-1,bt=0;
+ const score=t=>{prof.fill(0);for(let i=0;i<P.length;i+=2){const y=Math.round(P[i+1]-P[i]*t+H/2);if(y>=0&&y<2*H)prof[y]++}let s=0;for(let i=0;i<prof.length;i++)s+=prof[i]*prof[i];return s};
+ for(let a=-3;a<=3.001;a+=.1){const t=Math.tan(a*Math.PI/180),s=score(t);if(s>best){best=s;bt=t}}
+ const a0=Math.atan(bt)*180/Math.PI;for(let a=a0-.1;a<=a0+.1;a+=.01){const t=Math.tan(a*Math.PI/180),s=score(t);if(s>best){best=s;bt=t}}
+ return bt}
+function findStaves(R,W,H){const NS=10,sw=Math.floor(W/NS),segs=[];
+ for(let s=0;s<NS;s++){const xa=s*sw,xb=xa+sw,rows=new Float32Array(H);for(let y=0;y<H;y++){let c=0;const o=y*W;for(let x=xa;x<xb;x++)c+=R[o+x];rows[y]=c/sw}
+  let ln=[];for(let y=0;y<H;y++)if(rows[y]>.4){let e=y;while(e+1<H&&rows[e+1]>.4)e++;ln.push({a:y,b:e});y=e}
+  const m=[];for(const l of ln){const q=m[m.length-1];if(q&&l.a-q.b<=2)q.b=l.b;else m.push({...l})}
+  ln=m.map(l=>({y:(l.a+l.b)/2,t:l.b-l.a+1}));
+  for(let i=0;i+4<ln.length;){const av=(ln[i+4].y-ln[i].y)/4,L5=ln.slice(i,i+5);let ok=av>=4;
+   for(let j=1;j<5&&ok;j++)if(Math.abs(L5[j].y-L5[j-1].y-av)>av*.3)ok=false;if(ok&&L5.some(l=>l.t>av*.6))ok=false;
+   if(ok){segs.push({xc:(xa+xb)/2,ys:L5.map(l=>l.y),t:L5.reduce((a,l)=>a+l.t,0)/5,d:av});i+=5}else i++}}
+ const pred=(S,x)=>{const P=S.pts,q=P[P.length-1];if(P.length<2)return q.ys[2];const r=P[P.length-2];return q.ys[2]+(q.ys[2]-r.ys[2])/(q.xc-r.xc)*(x-q.xc)};
+ const staves=[];
+ for(const g of segs.sort((a,b)=>a.xc-b.xc)){let st=null,sd=1e9;for(const S of staves){const q=S.pts[S.pts.length-1];if(q.xc>=g.xc)continue;const df=Math.abs(pred(S,g.xc)-g.ys[2]);if(df<g.d*.6&&df<sd){sd=df;st=S}}if(st)st.pts.push(g);else staves.push({pts:[g]})}
+ for(let ch=true;ch;){ch=false;staves.sort((a,b)=>a.pts[0].xc-b.pts[0].xc);
+  for(const A of staves){if(!A.pts.length)continue;const qa=A.pts[A.pts.length-1];let bb=null;
+   for(const Bs of staves){if(A===Bs||!Bs.pts.length)continue;const qb=Bs.pts[0];if(qa.xc<qb.xc&&Math.abs(pred(A,qb.xc)-qb.ys[2])<qb.d*.8&&(!bb||qb.xc<bb.pts[0].xc))bb=Bs}
+   if(bb){A.pts.push(...bb.pts);bb.pts=[];ch=true}}
+  for(let i=staves.length-1;i>=0;i--)if(!staves[i].pts.length)staves.splice(i,1)}
+ let ST=staves.filter(S=>S.pts.length>=2).sort((a,b)=>b.pts.length-a.pts.length);const keep=[];
+ for(const S of ST){const m=S.pts[0].ys[2];if(!keep.some(K=>K.pts.some(q=>S.pts.some(p=>Math.abs(p.xc-q.xc)<1&&Math.abs(p.ys[2]-q.ys[2])<p.d*4))))keep.push(S)}
+ return keep.map(S=>{const ds=S.pts.map(p=>p.d).sort((a,b)=>a-b);S.d=ds[ds.length>>1];S.t=S.pts.reduce((a,p)=>a+p.t,0)/S.pts.length;return S}).sort((a,b)=>a.pts[0].ys[0]-b.pts[0].ys[0])}
+function lineY(S,i,x){const P=S.pts;if(x<=P[0].xc)return P[0].ys[i];const q=P[P.length-1];if(x>=q.xc)return q.ys[i];
+ for(let k=1;k<P.length;k++)if(x<=P[k].xc){const a=P[k-1],b=P[k],f=(x-a.xc)/(b.xc-a.xc);return a.ys[i]+(b.ys[i]-a.ys[i])*f}return q.ys[i]}
+function analyze(p){const W=p.w,H=p.h,src=p.bg.getContext('2d').getImageData(0,0,W,H).data,G=new Uint8Array(W*H);
+ for(let i=0;i<W*H;i++){const k=i*4,a=src[k+3]/255;G[i]=(.3*src[k]+.59*src[k+1]+.11*src[k+2])*a+255*(1-a)}
+ const th=otsu(G),B=new Uint8Array(W*H);for(let i=0;i<W*H;i++)B[i]=G[i]<th?1:0;
+ const t=skewOf(B,W,H),R=new Uint8Array(W*H);
+ for(let x=0;x<W;x++){const sh=Math.round((x-W/2)*t);for(let y=0;y<H;y++){const yy=y+sh;if(yy>=0&&yy<H)R[y*W+x]=B[yy*W+x]}}
+ const toO=(x,y)=>y,staves=findStaves(R,W,H),notes=[],LY=(S,i,x)=>lineY(S,i,x)+(x-W/2)*t+(S.off?S.off(x):0);
+ staves.forEach((S,si)=>{const d=S.d,lt=Math.max(1,S.t);
+  // correzione fine della posizione delle linee, blocco per blocco
+  {const BK=16,nb=Math.ceil(W/BK),off=new Float32Array(nb);for(let b=0;b<nb;b++){let bo=0,bs=-1;for(let o=-5;o<=5;o++){let sc=0;for(let x=b*BK;x<Math.min(W,b*BK+BK);x+=2)for(let i=0;i<5;i++){const y=Math.round(lineY(S,i,x)+(x-W/2)*t)+o;if(y>=0&&y<H)sc+=B[y*W+x]}if(sc>bs){bs=sc;bo=o}}off[b]=bo}
+   const sm=new Float32Array(nb);for(let b=0;b<nb;b++){const a=[];for(let k=-3;k<=3;k++)if(b+k>=0&&b+k<nb)a.push(off[b+k]);a.sort((p,q)=>p-q);sm[b]=a[a.length>>1]}
+   S.off=x=>{const f=x/BK-.5,b0=Math.max(0,Math.min(nb-1,Math.floor(f))),b1=Math.min(nb-1,b0+1),r=Math.max(0,Math.min(1,f-b0));return sm[b0]*(1-r)+sm[b1]*r}}
+  // estensione orizzontale del pentagramma
+  const dk=x=>{const y=Math.round(LY(S,2,x));for(let k=-Math.ceil(lt);k<=Math.ceil(lt);k++)if(B[(y+k)*W+x])return true;return false};
+  let x0=Math.round(S.pts[0].xc),x1=Math.round(S.pts[S.pts.length-1].xc),gap=0;
+  for(let x=x0;x>0;x--){if(dk(x)){x0=x;gap=0}else if(++gap>6)break}gap=0;
+  for(let x=x1;x<W-1;x++){if(dk(x)){x1=x;gap=0}else if(++gap>6)break}
+  let tmin=1e9,bmax=0;for(const x of [x0,x1,(x0+x1)/2]){tmin=Math.min(tmin,LY(S,0,x));bmax=Math.max(bmax,LY(S,4,x))}
+  const y0=Math.max(0,Math.round(tmin-4*d)),y1=Math.min(H-1,Math.round(bmax+3.5*d)),bh=y1-y0+1,M=new Uint8Array(W*bh);
   for(let y=0;y<bh;y++)M.set(B.subarray((y0+y)*W,(y0+y+1)*W),y*W);
-  fillHoles(M,W,bh,d);
-  for(const l of L5){const a=Math.round(l.t)-y0-2,b=Math.round(l.b)-y0+2;if(a<0||b>=bh)continue;for(let x=0;x<W;x++)if(!M[a*W+x]&&!M[b*W+x])for(let y=a+1;y<b;y++)M[y*W+x]=0}
+  const M0=M.slice(),LB=new Float32Array(5*W);for(let x=0;x<W;x++)for(let i=0;i<5;i++)LB[i*W+x]=LY(S,i,x)-y0;
+  fillHoles(M0,W,bh,d);
+  // togli le linee del pentagramma (solo i tratti sottili)
+  const RM=[],RMs={has:i=>false};const maxRun=Math.max(2,Math.round(lt*1.6+1));
+  for(let x=Math.max(0,x0-2);x<=Math.min(W-1,x1+2);x++)for(let i=0;i<5;i++){const yc=Math.round(LY(S,i,x))-y0;let y=-1;
+   for(let k=0;k<=Math.ceil(lt)+1&&y<0;k++){if(yc+k<bh&&M[(yc+k)*W+x])y=yc+k;else if(yc-k>=0&&M[(yc-k)*W+x])y=yc-k}
+   if(y<0)continue;let a=y,b=y;while(a>0&&M[(a-1)*W+x])a--;while(b<bh-1&&M[(b+1)*W+x])b++;
+   if(b-a+1<=maxRun){const ya=Math.max(a,Math.floor(yc-lt/2-1)),yb=Math.min(b,Math.ceil(yc+lt/2+1));for(let yy=ya;yy<=yb;yy++)if(M[yy*W+x]){M[yy*W+x]=0;RM.push(yy*W+x)}}}
+  {const back=RM.filter(i=>{const x=i%W;return(x>1&&M[i-1])||(x<W-1&&M[i+1])||(x>2&&M[i-2]&&!RMs.has(i-1))||(x<W-2&&M[i+2]&&!RMs.has(i+1))});back.forEach(i=>M[i]=1)}
+  fillHoles(M,W,bh,d);for(let i=0;i<M.length;i++)if(M0[i]&&!B[(y0+((i/W)|0))*W+i%W])M[i]=1;
   const W1=W+1,I=new Int32Array(W1*(bh+1));for(let y=0;y<bh;y++){let s=0;for(let x=0;x<W;x++){s+=M[y*W+x];I[(y+1)*W1+x+1]=I[y*W1+x+1]+s}}
-  const box=(x,y,w,h)=>{x=Math.max(0,Math.min(W-w,x));y=Math.max(0,Math.min(bh-h,y));return(I[(y+h)*W1+x+w]-I[y*W1+x+w]-I[(y+h)*W1+x]+I[y*W1+x])/(w*h)};
-  const bw=Math.max(3,Math.round(d*1.15)),hh=Math.max(2,Math.round(d*.7)),cand=[],xs=Math.round(x0+4*d),xe=Math.min(W-bw,Math.round(x1));
-  for(let y=0;y+hh<=bh;y++)for(let x=xs;x<=xe;x++){const f=box(x,y,bw,hh);if(f>.75){if(box(x-bw,y,bw,hh)>.5&&box(x+bw,y,bw,hh)>.5)continue;cand.push({x:x+bw/2,y:y+hh/2,f})}}
-  cand.sort((a,b)=>b.f-a.f);const acc=[];for(const c of cand)if(!acc.some(a=>Math.abs(a.x-c.x)<bw*.9&&Math.abs(a.y-c.y)<d*.75))acc.push(c);
-  for(const a of acc){let sx=0,sy=0,n=0;const ya=Math.max(0,Math.round(a.y-d*.55)),yb=Math.min(bh-1,Math.round(a.y+d*.55));
-   for(let y=ya;y<=yb;y++)for(let x=Math.round(a.x-bw/2);x<=Math.round(a.x+bw/2);x++)if(M[y*W+x]){sx+=x;sy+=y;n++}
-   const cx=n?sx/n:a.x,cy=(n?sy/n:a.y)+y0,step=Math.round((bot-cy)/(d/2));if(step<-8||step>16)continue;
-   notes.push({si,x:cx,cy,step,bot,d,bw})}});
+  const box=(x,y,w,h)=>{x=Math.max(0,Math.min(W-w,Math.round(x)));y=Math.max(0,Math.min(bh-h,Math.round(y)));return(I[(y+h)*W1+x+w]-I[y*W1+x+w]-I[(y+h)*W1+x]+I[y*W1+x])/(w*h)};
+  const bw=Math.max(3,Math.round(d*1.1)),hh=Math.max(2,Math.round(d*.6)),cand=[],xs=Math.round(x0+4.5*d),xe=Math.min(W-bw,x1);
+  for(let y=0;y+hh<=bh;y++)for(let x=xs;x<=xe;x++){const f=box(x,y,bw,hh);if(f>.7)cand.push({x:x+bw/2,y:y+hh/2,f})}
+  cand.sort((a,b)=>b.f-a.f);const acc=[];
+  const run=(x,y,dx,dy)=>{let n=0,g=0;x=Math.round(x);y=Math.round(y);while(x>=0&&x<W&&y>=0&&y<bh){if(M[y*W+x]){n+=1+g;g=0}else if(++g>1)break;x+=dx;y+=dy}return n};
+  for(const c of cand){if(acc.some(a=>Math.abs(a.x-c.x)<bw*.85&&Math.abs(a.y-c.y)<d*.85))continue;
+   // centro preciso
+   let sx=0,sy=0,n=0;const ya=Math.max(0,Math.round(c.y-d*.6)),yb=Math.min(bh-1,Math.round(c.y+d*.6));
+   for(let y=ya;y<=yb;y++)for(let x=Math.round(c.x-d*.3);x<=Math.round(c.x+d*.3);x++)if(M[y*W+x]){sx+=x;sy+=y;n++}
+   let cx=c.x,cy=n?sy/n:c.y;
+   const ell=(ex,ey,k=1)=>{const A=d*.6*k,Bv=d*.42*(k>1?1.1:1);let ni=0,di=0,no=0,dO=0,ns=0,ds=0;for(let y=Math.round(ey-Bv*1.9);y<=Math.round(ey+Bv*1.9);y++){if(y<0||y>=bh)continue;for(let x=Math.round(ex-A*1.6);x<=Math.round(ex+A*1.6);x++){const q=((x-ex)/A)**2+((y-ey)/Bv)**2;if(q<=1){ni++;di+=M[y*W+x]}else if(q<=2.6){no++;dO+=M[y*W+x];if(Math.abs(x-ex)>A){ns++;ds+=M[y*W+x]}}}}return[di/ni,dO/no,ns?ds/ns:0]};
+   let best=null;for(const k of [1,1.35])for(let oy=-2;oy<=2;oy++)for(let ox=-3;ox<=3;ox++){const [fi,fo,fs]=ell(cx+ox,cy+oy,k),sc=fi-fs-fo*.5;if(k>1&&(fs>.25||fo>.45))continue;if(!best||sc>best.sc)best={sc,fi,fo,fs,x:cx+ox,y:cy+oy}}
+   if(!best)continue;
+   const DB={si,x:Math.round(best.x),y:Math.round(toO(best.x,best.y+y0)),fi:+best.fi.toFixed(2),fo:+best.fo.toFixed(2),fs:+best.fs.toFixed(2)};
+   if((best.fi<.78&&!(best.fi>=.6&&best.fo<=.2&&best.fs<=.12))||best.fs>.35||(best.fo>.4&&!(best.fi>.85&&best.fs<.2))){DB.r='vh';continue}
+   {const cd=(x,y)=>box(x-1,y-1,3,3)>.5,A=d*.62,Bv=d*.36;if(cd(best.x-A,best.y-Bv)&&cd(best.x+A,best.y-Bv)&&cd(best.x-A,best.y+Bv)&&cd(best.x+A,best.y+Bv)){DB.r='rest';continue}}
+   if(best.x>x1-d*1.2){DB.r='bar';continue}
+   {const hw=[-.15,0,.15].map(o=>run(best.x,best.y+o*d,-1,0)+run(best.x,best.y+o*d,1,0)-1).sort((p,q)=>p-q)[1];DB.hw=hw;if(hw<d*.9){DB.r='narrow';continue}
+    const wr=o=>run(best.x,best.y+o*d,-1,0)+run(best.x,best.y+o*d,1,0)-1,ws=[-.35,0,.35].map(wr),vv=run(best.x,best.y,0,-1)+run(best.x,best.y,0,1)-1;if(Math.max(...ws)-Math.min(...ws)<=2&&vv>=d*2.5){DB.r='bar';continue}}
+   cx=best.x;cy=best.y;if(acc.some(a=>Math.abs(a.x-cx)<bw*.85&&Math.abs(a.y-cy)<d*.85)){DB.r='dup';continue}
+   if(box(cx-bw*1.5,cy-hh/2,bw,hh)>.6&&box(cx+bw*.5,cy-hh/2,bw,hh)>.6){DB.r='side';continue}
+   // alterazioni (bemolle/diesis/bequadro): gambo a sinistra verso l'alto o tratti sopra e sotto
+   const thinAt=(x,y)=>{y=Math.round(y);if(y<0||y>=bh||!M[y*W+x])return false;let l=x,q=x;while(l>0&&M[y*W+l-1])l--;while(q<W-1&&M[y*W+q+1])q++;return q-l+1<=Math.max(3,d*.3)};
+   const ext=(xa,xb,y,dy)=>{let m=0;for(let x=Math.round(xa);x<=Math.round(xb);x++){const r=run(x,y,0,dy);if(r>m&&thinAt(x,y+dy*d*.6))m=r}return m};
+   const yt=cy-d*.55,yb2=cy+d*.55,upL=ext(cx-d*.65,cx-d*.3,yt,-1),dnL=ext(cx-d*.65,cx-d*.3,yb2,1),upR=ext(cx+d*.3,cx+d*.65,yt,-1),dnR=ext(cx+d*.3,cx+d*.65,yb2,1);
+   Object.assign(DB,{upL,dnL,upR,dnR});if(upL>d*.8||(upR>d*.9&&dnR>d*.9)||(upL>d*.6&&dnL>d*.6)){DB.r='acc';continue}DB.r='ok';
+   acc.push({x:cx,y:cy,f:c.f,DB})}
+  const ts=acc.filter(a=>a.x<x0+12*d);for(const a of ts)for(const b of ts)if(a!==b&&Math.abs(a.x-b.x)<d*.4&&Math.abs(Math.abs(a.y-b.y)-2*d)<d*.5)a.ts=b.ts=1;
+  for(const a of acc){if(a.ts)continue;const X=a.x,Y=a.y+y0,ytop=LY(S,0,X),ybot=LY(S,4,X),hs=(ybot-ytop)/8,step=Math.round((ybot-Y)/hs);
+   if(step<-8||step>16)continue;
+   // sotto/sopra il pentagramma servono i tagli addizionali
+   const ledg=yy=>{for(let k=-Math.ceil(lt)-1;k<=Math.ceil(lt)+1;k++){const y=Math.round(yy+k);if(y<0||y>=H)continue;let l=Math.round(X),r=Math.round(X),g=0;
+     while(l>0){if(B[y*W+l-1]){l--;g=0}else if(++g>1)break;else l--}g=0;while(r<W-1){if(B[y*W+r+1]){r++;g=0}else if(++g>1)break;else r++}if(r-l>=d*1.15)return true}return false};
+   let okL=true;for(let k=1;k<=Math.floor(-step/2)&&okL;k++)okL=ledg(ybot+hs*2*k);for(let k=1;k<=Math.floor((step-8)/2)&&okL;k++)okL=ledg(ytop-hs*2*k);
+   if(!okL){a.DB.r='ledger';continue}a.DB.step=step;notes.push({si,x:X,cy:toO(X,Y),step,bot:toO(X,ybot),d,bw})}});
+ // nota vista da due pentagrammi vicini: tengo quello più vicino
+ for(const n of notes){n.dc=Math.abs(n.cy-(n.bot-2*n.d))}
+ const keepN=notes.filter(n=>!notes.some(m=>m!==n&&m.si!==n.si&&Math.abs(m.x-n.x)<n.d*.6&&Math.abs(m.cy-n.cy)<n.d*.6&&(m.dc<n.dc||(m.dc===n.dc&&m.si<n.si))));notes.length=0;notes.push(...keepN);
  p.lb=[];const bySt={};notes.forEach(n=>(bySt[n.si]=bySt[n.si]||[]).push(n));
  for(const k in bySt){const ns=bySt[k].sort((a,b)=>a.x-b.x);let g=[];
   const flush=()=>{if(!g.length)return;g.sort((a,b)=>a.cy-b.cy);const low=g[g.length-1].cy,gx=g.reduce((s,n)=>s+n.x,0)/g.length;
    g.forEach((n,i)=>p.lb.push({k:'l',si:n.si,step:n.step,x:(L.pos==='staff'?gx:n.x)/W,cy:n.cy,bot:n.bot,d:n.d,low,stack:i,sz:n.d*1.1,custom:null,moved:false,y:0}));g=[]};
   for(const n of ns){if(g.length&&Math.abs(n.x-g[0].x)>n.bw*.6)flush();g.push(n)}flush()}
- layout(p);return p.lb.length}
+ layout(p);p._dbg={lt:staves.map(S=>S.t.toFixed(1)).join(','),st:staves.map(S=>S.pts.map(q=>[q.xc,q.ys.map(Math.round).join('/')]).join(' ')),staves:staves.length,skew:t,th};return p.lb.length}
 async function runAn(all){if(!S.pages.length)return toast('Prima importa uno spartito');select(null);toast('Analizzo i pentagrammi…',0);await wait(60);let n=0;
  for(const p of all?S.pages:[S.pages[S.cur]]){n+=analyze(p);await wait(10)}render();
  toast(n?`Ho scritto ${n} note. Tocca un nome per correggerlo.`:'Non trovo pentagrammi: prova con un\'immagine più dritta e nitida',4500)}
@@ -357,12 +444,18 @@ let Z=1,pz=null;const sw=$('stageWrap');
 function setZoom(z,cx,cy){const old=Z;Z=Math.max(.25,Math.min(6,z));if(cx==null){cx=sw.clientWidth/2;cy=sw.clientHeight/2}
  const px=(sw.scrollLeft+cx)/old,py=(sw.scrollTop+cy)/old;$('page').style.width=Z*100+'%';sw.scrollLeft=px*Z-cx;sw.scrollTop=py*Z-cy;
  $('zV').textContent=Math.round(Z*100)+'%';const p=S.pages[S.cur];if(p)p.lb.forEach(l=>l.el&&posLb(l))}
-sw.addEventListener('touchstart',e=>{if(e.touches.length===2){S.pinch=true;const[a,b]=e.touches;pz={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z:Z}}},{passive:true});
-sw.addEventListener('touchmove',e=>{if(pz&&e.touches.length===2){e.preventDefault();const[a,b]=e.touches,r=sw.getBoundingClientRect();
+let pan=null;const onSheet=t=>!boxMode&&!(t.closest&&t.closest('.st,.lb'));
+sw.addEventListener('touchstart',e=>{if(e.touches.length===1&&onSheet(e.target)){const t=e.touches[0];pan={x:t.clientX,y:t.clientY,l:sw.scrollLeft,t:sw.scrollTop}}if(e.touches.length===2){pan=null;S.pinch=true;const[a,b]=e.touches;pz={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z:Z}}},{passive:true});
+sw.addEventListener('touchmove',e=>{if(pan&&e.touches.length===1){e.preventDefault();const t=e.touches[0];sw.scrollLeft=pan.l-(t.clientX-pan.x);sw.scrollTop=pan.t-(t.clientY-pan.y);return}if(pz&&e.touches.length===2){e.preventDefault();const[a,b]=e.touches,r=sw.getBoundingClientRect();
  setZoom(pz.z*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/pz.d,(a.clientX+b.clientX)/2-r.left,(a.clientY+b.clientY)/2-r.top)}},{passive:false});
-sw.addEventListener('touchend',e=>{if(e.touches.length<2&&pz){pz=null;setTimeout(()=>S.pinch=false,80)}});
+sw.addEventListener('touchend',e=>{if(!e.touches.length)pan=null;if(e.touches.length<2&&pz){pz=null;setTimeout(()=>S.pinch=false,80)}});
 sw.addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();const r=sw.getBoundingClientRect();setZoom(Z*(e.deltaY<0?1.1:.9),e.clientX-r.left,e.clientY-r.top)}},{passive:false});
+sw.addEventListener('mousedown',e=>{if(!onSheet(e.target))return;const p={x:e.clientX,y:e.clientY,l:sw.scrollLeft,t:sw.scrollTop},mv=ev=>{sw.scrollLeft=p.l-(ev.clientX-p.x);sw.scrollTop=p.t-(ev.clientY-p.y)},up=()=>{removeEventListener('mousemove',mv);removeEventListener('mouseup',up)};addEventListener('mousemove',mv);addEventListener('mouseup',up)});
 $('zIn').onclick=()=>setZoom(Z*1.25);$('zOut').onclick=()=>setZoom(Z/1.25);
+/* ---------- temi ---------- */
+function setTheme(t){document.body.className=t?'t-'+t:'';try{localStorage.setItem('mpTheme',t)}catch(e){}}
+$('theme').onchange=e=>setTheme(e.target.value);
+try{const t=localStorage.getItem('mpTheme')||'';$('theme').value=t;setTheme(t)}catch(e){}
 updPk();
 </script>
 </body></html>
