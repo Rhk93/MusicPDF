@@ -11,6 +11,14 @@ body.t-notte{--a:#ff7eb6;--b:#7aa2ff;--c:#c9a7ff;--d:#4fd1a5;--bg:#12131c;--card
 body.t-pastello{--a:#f7a8b8;--b:#9ec9f5;--c:#fde2a7;--d:#a8e6cf;--bg:#fdf6ff;--card:#fff;--tx:#4a4a5a;--soft:#f1ecff}
 body.t-natale{--a:#d62828;--b:#1b7a3e;--c:#f4c430;--d:#2a9d50;--bg:#fff5f0;--card:#fff;--tx:#3b1f1f;--soft:#fde7e3}
 body.t-oceano{--a:#00a6c8;--b:#0466c8;--c:#7ae7ff;--d:#00b894;--bg:#eef9ff;--card:#fff;--tx:#0b2840;--soft:#dff1fb}
+body.t-carta{--a:#b5651d;--b:#6b4f2c;--c:#e9c46a;--d:#7f9c4f;--bg:#f3ead8;--card:#fbf6ea;--tx:#3a2c1a;--soft:#efe3c8}
+body.t-contrasto{--a:#ff0055;--b:#0044ff;--c:#ffdd00;--d:#00aa44;--bg:#ffffff;--card:#ffffff;--tx:#000000;--soft:#e6e6e6}
+body.t-lavanda{--a:#b07cd8;--b:#7b6cf6;--c:#f6c6ea;--d:#7fd1b9;--bg:#f6f1ff;--card:#fff;--tx:#3b2d55;--soft:#ece4ff}
+body.s-squadrato .card,body.s-squadrato button,body.s-squadrato .btn,body.s-squadrato input,body.s-squadrato select,body.s-squadrato #tb{border-radius:3px!important}
+body.s-giocoso{font-family:'Patrick Hand',Fredoka,sans-serif;font-size:18px}
+body.s-giocoso .card{border:3px dashed var(--b);border-radius:24px}body.s-giocoso button,body.s-giocoso .btn{border-radius:22px;box-shadow:0 3px 0 #0003}
+body.s-elegante{font-family:Merriweather,Georgia,serif}body.s-elegante .card{box-shadow:none;border:1px solid #0002;border-radius:8px}body.s-elegante header{background:var(--tx)!important;color:var(--bg)}
+body.s-compatto .card{margin:6px;padding:8px}body.s-compatto button,body.s-compatto .btn{padding:6px 10px;font-size:14px}
 body.t-bosco{--a:#e07a5f;--b:#3d7a4f;--c:#f2cc8f;--d:#81b29a;--bg:#f4f1e8;--card:#fffdf7;--tx:#2f3e2f;--soft:#e9efe3}
 *{box-sizing:border-box}body{margin:0;font-family:Fredoka,system-ui,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:200px}
 header{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;padding:12px 16px;font-size:22px;font-weight:700;position:sticky;top:0;z-index:20}
@@ -45,7 +53,7 @@ label{display:flex;gap:6px;align-items:center}
 footer{text-align:center;font-size:12px;color:#888;margin:20px}
 </style></head>
 <body>
-<header style="display:flex;align-items:center;justify-content:space-between;gap:8px">🎵 MusicPDF<select id="theme" style="font-size:14px;padding:4px 6px"><option value="">🎨 Classico</option><option value="notte">🌙 Notte</option><option value="pastello">🍬 Pastello</option><option value="natale">🎄 Natale</option><option value="oceano">🌊 Oceano</option><option value="bosco">🌿 Bosco</option></select></header>
+<header style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">🎵 MusicPDF<select id="theme" style="font-size:14px;padding:4px 6px"><option value="">🎨 Classico</option><option value="notte">🌙 Notte</option><option value="pastello">🍬 Pastello</option><option value="natale">🎄 Natale</option><option value="oceano">🌊 Oceano</option><option value="bosco">🌿 Bosco</option><option value="carta">📜 Carta</option><option value="lavanda">💜 Lavanda</option><option value="contrasto">⚫ Contrasto</option></select><select id="style" style="font-size:14px;padding:4px 6px"><option value="">Stile: Morbido</option><option value="squadrato">Squadrato</option><option value="giocoso">Giocoso</option><option value="elegante">Elegante</option><option value="compatto">Compatto</option></select></header>
 
 <div class="card">
  <div class="row"><label class="btn">📂 Importa PDF o immagine<input type="file" id="fIn" accept="application/pdf,image/*" hidden></label></div>
@@ -434,12 +442,12 @@ async function build(){const fmt=$('fmt').value,white=$('white').checked||fmt===
  else{const mt={png:'image/png',jpg:'image/jpeg',webp:'image/webp'}[fmt];
   for(let i=0;i<pages.length;i++){const c=await compose(pages[i],white);out.push({b:await toBlob(c,mt,.92),n:`${S.name}_MusicPDF${pages.length>1?'_p'+(i+1):''}.${fmt}`})}}
  return out}
-function dl(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},5000)}
+function dl(b,n){if(window.AndroidBridge){const r=new FileReader();r.onload=()=>AndroidBridge.save(String(r.result).split(',')[1],n,b.type||'application/octet-stream');r.readAsDataURL(b);return}const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},5000)}
 $('save').onclick=async()=>{if(!S.pages.length)return toast('Prima importa uno spartito');select(null);toast('Preparo il file…',0);
  try{const o=await build();for(const f of o){dl(f.b,f.n);await wait(500)}toast('Salvato ✔')}catch(e){toast('Errore: '+e.message,5000)}};
 $('share').onclick=async()=>{if(!S.pages.length)return toast('Prima importa uno spartito');select(null);toast('Preparo il file…',0);
  try{const o=await build(),files=o.map(f=>new File([f.b],f.n,{type:f.b.type}));toast('Pronto');
-  if(navigator.canShare&&navigator.canShare({files}))await navigator.share({files}).catch(()=>{});else{toast('Condivisione non disponibile: lo salvo');o.forEach(f=>dl(f.b,f.n))}}catch(e){toast('Errore: '+e.message,5000)}};
+  if(!window.AndroidBridge&&navigator.canShare&&navigator.canShare({files}))await navigator.share({files}).catch(()=>{});else{toast('Condivisione non disponibile: lo salvo');o.forEach(f=>dl(f.b,f.n))}}catch(e){toast('Errore: '+e.message,5000)}};
 /* ---------- anteprima del foglio finito ---------- */
 let vI=0;
 async function showPrev(){try{const p=S.pages[vI],fmt=$('fmt').value,white=$('white').checked||fmt==='jpg';toast('Preparo l\'anteprima…',0);
@@ -486,9 +494,11 @@ sw.addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();const r=sw.getB
 sw.addEventListener('mousedown',e=>{if(!onSheet(e.target))return;const p={x:e.clientX,y:e.clientY,l:sw.scrollLeft,t:sw.scrollTop},mv=ev=>{sw.scrollLeft=p.l-(ev.clientX-p.x);sw.scrollTop=p.t-(ev.clientY-p.y)},up=()=>{removeEventListener('mousemove',mv);removeEventListener('mouseup',up)};addEventListener('mousemove',mv);addEventListener('mouseup',up)});
 $('zIn').onclick=()=>setZoom(Z*1.25);$('zOut').onclick=()=>setZoom(Z/1.25);
 /* ---------- temi ---------- */
-function setTheme(t){document.body.className=t?'t-'+t:'';try{localStorage.setItem('mpTheme',t)}catch(e){}}
+function applyLook(){const t=$('theme').value,st=$('style').value;document.body.className=(t?'t-'+t:'')+(st?' s-'+st:'');try{localStorage.setItem('mpTheme',t);localStorage.setItem('mpStyle',st)}catch(e){}}
+function setTheme(t){$('theme').value=t;applyLook()}
+$('style').onchange=applyLook;
 $('theme').onchange=e=>setTheme(e.target.value);
-try{const t=localStorage.getItem('mpTheme')||'';$('theme').value=t;setTheme(t)}catch(e){}
+try{$('style').value=localStorage.getItem('mpStyle')||'';setTheme(localStorage.getItem('mpTheme')||'')}catch(e){}
 /* ---------- tavolozza colori dei nomi ---------- */
 ['#d62828','#1d4ed8','#15803d','#ea580c','#7c3aed','#db2777','#0891b2','#111111'].forEach(c=>{const b=document.createElement('button');b.style.cssText=`background:${c};width:34px;height:34px;padding:0;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #0003`;
  b.onclick=()=>{$('nCol').value=c;S.pages.forEach(p=>p.lb.forEach(l=>delete l.col));nUpd()};$('nPal').appendChild(b)});
