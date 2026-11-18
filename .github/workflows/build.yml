@@ -1,0 +1,110 @@
+name: Compila MusicPDF (Android, Mac, Windows)
+
+on:
+  push:
+    branches: [main]
+    paths: ['MusicPDF-app.zip', '.github/workflows/build.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepara:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Estrai lo zip
+        run: unzip -q MusicPDF-app.zip -d src
+      - name: Librerie dentro l'app (PDF funziona anche senza internet)
+        run: |
+          cd src/www && mkdir -p lib && cd lib
+          npm pack pdfjs-dist@3.11.174 jspdf@2.5.1 --silent
+          tar -xzf pdfjs-dist-3.11.174.tgz && cp package/build/pdf.min.js package/build/pdf.worker.min.js . && rm -rf package
+          tar -xzf jspdf-2.5.1.tgz && cp package/dist/jspdf.umd.min.js . && rm -rf package *.tgz
+          cd ..
+          sed -i 's#https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/#lib/#g; s#https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/#lib/#g' index.html
+          ls lib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sorgenti
+          path: src
+
+  android:
+    needs: prepara
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sorgenti
+          path: src
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Compila APK
+        run: |
+          mkdir -p src/android/src/main/assets
+          cp -r src/www src/android/src/main/assets/www
+          cd src/android
+          gradle assembleRelease --no-daemon
+          cp build/outputs/apk/release/*.apk "$GITHUB_WORKSPACE/MusicPDF-Android.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-android
+          path: MusicPDF-Android.apk
+
+  desktop:
+    needs: prepara
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sorgenti
+          path: src
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Compila
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          cp -r src/www src/desktop/www
+          cd src/desktop
+          npm install --no-audit --no-fund
+          npx electron-builder --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.os }}
+          path: |
+            src/desktop/dist/*.dmg
+            src/desktop/dist/*.exe
+
+  release:
+    needs: [android, desktop]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: app-*
+          path: out
+          merge-multiple: true
+      - run: ls -la out
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: MusicPDF 1.${{ github.run_number }}
+          body: |
+            MusicPDF - Copyright © Ignazio Paolicelli
+            - Android: MusicPDF-Android.apk
+            - Mac: MusicPDF-Mac.dmg
+            - Windows: MusicPDF-Windows-Installazione.exe (oppure la versione Portatile)
+          files: out/*
