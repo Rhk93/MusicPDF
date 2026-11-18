@@ -74,7 +74,9 @@ footer{text-align:center;font-size:12px;color:#888;margin:20px}
   Chiave <select id="nClef"><option value="g">Violino</option><option value="f">Basso</option><option value="p">Pianoforte (alternate)</option></select></div>
  <div class="row">Alterazioni in chiave <select id="nKey"></select></div>
  <div class="row">Posizione <select id="nPos"><option value="staff">Sotto il pentagramma</option><option value="note">Sotto ogni nota</option></select></div>
- <div class="row">Carattere <select id="nFont"></select><input type="color" id="nCol" value="#d62828"><label><input type="checkbox" id="nBold" checked>Grassetto</label></div>
+ <div class="row">Carattere <select id="nFont"></select><label><input type="checkbox" id="nBold" checked>Grassetto</label></div>
+ <div class="row"><b>🎨 Colore dei nomi</b> <input type="color" id="nCol" value="#d62828"></div>
+ <div class="row" id="nPal"></div>
  <div class="row">Grandezza <input type="range" id="nSz" min="40" max="300" value="100" style="flex:1"><b id="nSzV">100%</b></div>
  <div class="row"><button class="red" id="nClr">🗑 Cancella i nomi della pagina</button></div>
  <p class="small">Il riconoscimento è automatico ma non perfetto: tocca un nome per correggerlo o eliminarlo, trascinalo per spostarlo.</p>
@@ -487,6 +489,10 @@ $('zIn').onclick=()=>setZoom(Z*1.25);$('zOut').onclick=()=>setZoom(Z/1.25);
 function setTheme(t){document.body.className=t?'t-'+t:'';try{localStorage.setItem('mpTheme',t)}catch(e){}}
 $('theme').onchange=e=>setTheme(e.target.value);
 try{const t=localStorage.getItem('mpTheme')||'';$('theme').value=t;setTheme(t)}catch(e){}
+/* ---------- tavolozza colori dei nomi ---------- */
+['#d62828','#1d4ed8','#15803d','#ea580c','#7c3aed','#db2777','#0891b2','#111111'].forEach(c=>{const b=document.createElement('button');b.style.cssText=`background:${c};width:34px;height:34px;padding:0;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #0003`;
+ b.onclick=()=>{$('nCol').value=c;S.pages.forEach(p=>p.lb.forEach(l=>delete l.col));nUpd()};$('nPal').appendChild(b)});
+$('nCol').addEventListener('input',()=>{S.pages.forEach(p=>p.lb.forEach(l=>delete l.col))});
 /* ---------- gomma (cancella col bianco) ---------- */
 S.eraser=false;const eUndo=[];
 function eraOn(v){S.eraser=v;$('eraBar').classList.toggle('hid',!v);$('eraBtn').style.background=v?'var(--c)':'';select(null);if(v)toast('Passa il dito sul foglio per cancellare: diventa bianco',3000)}
@@ -497,13 +503,14 @@ function eraSeg(p,ax,ay,bx,by,r){const list=[[p.bg,null]];if(p.o&&p.o.c!==p.bg)l
   x.save();x.globalCompositeOperation='source-over';x.strokeStyle='#fff';x.fillStyle='#fff';x.lineCap='round';x.lineWidth=m[4]*2;x.beginPath();x.moveTo(m[0],m[1]);x.lineTo(m[2],m[3]);x.stroke();x.beginPath();x.arc(m[2],m[3],m[4],0,7);x.fill();x.restore()}}
 $('page').addEventListener('pointerdown',e=>{if(!S.eraser)return;e.preventDefault();e.stopPropagation();const pg=$('page'),p=S.pages[S.cur];if(!p)return;
  const snap={p,bg:p.bg,bgD:p.bg.getContext('2d').getImageData(0,0,p.w,p.h),oc:p.o&&p.o.c!==p.bg?p.o.c:null};if(snap.oc)snap.oD=snap.oc.getContext('2d').getImageData(0,0,snap.oc.width,snap.oc.height);
- eUndo.push(snap);if(eUndo.length>8)eUndo.shift();
+ snap.lb=p.lb.slice();eUndo.push(snap);if(eUndo.length>8)eUndo.shift();
  pg.setPointerCapture(e.pointerId);const pos=ev=>{const r=pg.getBoundingClientRect(),k=p.w/r.width;return[(ev.clientX-r.left)*k,(ev.clientY-r.top)*k,$('eraSz').value/2*k]};
  let [lx,ly,rr]=pos(e);eraSeg(p,lx,ly,lx,ly,rr);
- const mv=ev=>{if(S.pinch)return;const [x,y,r]=pos(ev);eraSeg(p,lx,ly,x,y,r);lx=x;ly=y};
+ const hitLb=ev=>{const R=$('eraSz').value/2;let ch=false;for(const l of p.lb.slice()){if(!l.el)continue;const b=l.el.getBoundingClientRect();const dx=Math.max(b.left-ev.clientX,0,ev.clientX-b.right),dy=Math.max(b.top-ev.clientY,0,ev.clientY-b.bottom);if(dx*dx+dy*dy<=R*R){p.lb.splice(p.lb.indexOf(l),1);l.el.remove();ch=true}}};hitLb(e);
+ const mv=ev=>{if(S.pinch)return;const [x,y,r]=pos(ev);eraSeg(p,lx,ly,x,y,r);hitLb(ev);lx=x;ly=y};
  const up=()=>{pg.removeEventListener('pointermove',mv);pg.removeEventListener('pointerup',up);pg.removeEventListener('pointercancel',up)};
  pg.addEventListener('pointermove',mv);pg.addEventListener('pointerup',up);pg.addEventListener('pointercancel',up)},true);
-$('eraUndo').onclick=()=>{const u=eUndo.pop();if(!u)return toast('Niente da annullare');if(u.p.bg===u.bg)u.bg.getContext('2d').putImageData(u.bgD,0,0);if(u.oc)u.oc.getContext('2d').putImageData(u.oD,0,0);toast('Annullato')};
+$('eraUndo').onclick=()=>{const u=eUndo.pop();if(!u)return toast('Niente da annullare');if(u.p.bg===u.bg)u.bg.getContext('2d').putImageData(u.bgD,0,0);if(u.oc)u.oc.getContext('2d').putImageData(u.oD,0,0);if(u.lb){u.p.lb=u.lb;render()}toast('Annullato')};
 updPk();
 </script>
 </body></html>
