@@ -81,6 +81,14 @@ jobs:
           cd src/desktop
           npm install --no-audit --no-fund
           npx electron-builder --publish never
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            APP="dist/mac-universal/MusicPDF.app"
+            xattr -cr "$APP"
+            codesign --force --deep --sign - "$APP"
+            codesign --verify --deep --strict --verbose=2 "$APP"
+            mkdir -p dmgsrc && cp -R "$APP" dmgsrc/ && ln -s /Applications dmgsrc/Applications
+            hdiutil create -volname MusicPDF -srcfolder dmgsrc -ov -format UDZO dist/MusicPDF-Mac.dmg
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: app-${{ matrix.os }}
@@ -105,6 +113,6 @@ jobs:
           body: |
             MusicPDF - Copyright © Ignazio Paolicelli
             - Android: MusicPDF-Android.apk
-            - Mac: MusicPDF-Mac.dmg
+            - Mac: MusicPDF-Mac.dmg (prima di aprirla, nel Terminale: xattr -cr /Applications/MusicPDF.app)
             - Windows: MusicPDF-Windows-Installazione.exe (oppure la versione Portatile)
           files: out/*
