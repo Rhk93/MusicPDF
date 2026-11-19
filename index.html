@@ -81,6 +81,7 @@ footer{text-align:center;font-size:12px;color:#888;margin:20px}
  <div class="row">Nomi <select id="nNot"><option value="it">Do Re Mi</option><option value="en">C D E</option></select>
   Chiave <select id="nClef"><option value="g">Violino</option><option value="f">Basso</option><option value="p">Pianoforte (alternate)</option></select></div>
  <div class="row">Alterazioni in chiave <select id="nKey"></select></div>
+ <div class="row"><b>Cosa scrivere</b> <select id="nMode"><option value="all">Tutte le note</option><option value="mel">Solo melodia</option><option value="chn">Solo accordi – nota per nota</option><option value="chs">Solo accordi – sigla sopra</option><option value="mels">Melodia e sigla sopra</option></select></div>
  <div class="row">Posizione <select id="nPos"><option value="staff">Sotto il pentagramma</option><option value="note">Sotto ogni nota</option></select></div>
  <div class="row">Carattere <select id="nFont"></select><label><input type="checkbox" id="nBold" checked>Grassetto</label></div>
  <div class="row"><b>🎨 Colore dei nomi</b> <input type="color" id="nCol" value="#d62828"></div>
@@ -234,7 +235,7 @@ $('myImg').onchange=e=>{const f=e.target.files[0];e.target.value='';addBlob(f)};
 /* ---------- disegno pagina ---------- */
 function render(){const p=S.pages[S.cur];if(!p)return;$('pgN').textContent=`Pagina ${S.cur+1} / ${S.pages.length}`;const pg=$('page');
  const oc=pg.querySelector('canvas.bgc');if(oc!==p.bg){if(oc)oc.remove();p.bg.className='bgc';pg.prepend(p.bg)}pg.querySelectorAll('.st,.lb').forEach(e=>e.remove());
- p.st.forEach(s=>pg.appendChild(stEl(s)));p.lb.forEach(l=>pg.appendChild(lbEl(l,p)))}
+ p.st.forEach(s=>pg.appendChild(stEl(s)));p.lb.forEach(l=>{if(visL(l))pg.appendChild(lbEl(l,p));else l.el=null})}
 function stEl(s){const d=document.createElement('div');d.className='st'+(S.sel===s?' on':'');s.el=d;posSt(s);const im=new Image();im.src=s.url;d.appendChild(im);
  const h=document.createElement('i');h.className='rs';d.appendChild(h);drag(d,s);return d}
 function posSt(s){const d=s.el;d.style.left=s.x*100+'%';d.style.top=s.y*100+'%';d.style.width=s.w*100+'%';d.style.transform=`rotate(${s.rot}deg)`}
@@ -270,9 +271,19 @@ document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.que
 
 /* ---------- nomi delle note ---------- */
 const NM={it:['Do','Re','Mi','Fa','Sol','La','Si'],en:['C','D','E','F','G','A','B']},SH=[3,0,4,1,5,2,6],FL=[6,2,5,1,4,0,3];
-function lbText(l){if(l.custom!=null)return l.custom;const cl=L.clef==='p'?(l.si%2?'f':'g'):L.clef,idx=(((cl==='g'?2:4)+l.step)%7+7)%7;let t=NM[L.not][idx];if(l.acc==='b')return t+'♭';if(l.acc==='#')return t+'♯';if(l.acc==='n')return t;
+let GID=0;
+const PC=[0,2,4,5,7,9,11];
+function noteInfo(l){const cl=L.clef==='p'?(l.si%2?'f':'g'):L.clef,idx=(((cl==='g'?2:4)+l.step)%7+7)%7;let a=0;
+ if(l.acc==='b')a=-1;else if(l.acc==='#')a=1;else if(l.acc!=='n'){const K=L.key==='auto'?(l.skey||0):+L.key;if(K>0&&SH.slice(0,K).includes(idx))a=1;if(K<0&&FL.slice(0,-K).includes(idx))a=-1}
+ return{idx,a,pc:(PC[idx]+a+12)%12,name:NM[L.not][idx]+(a>0?'♯':a<0?'♭':'')}}
+const CH=[[[0,4,7],''],[[0,3,7],'m'],[[0,4,7,10],'7'],[[0,4,7,11],'maj7'],[[0,3,7,10],'m7'],[[0,3,6],'dim'],[[0,3,6,10],'m7♭5'],[[0,3,6,9],'dim7'],[[0,4,8],'+'],[[0,5,7],'sus4'],[[0,2,7],'sus2'],[[0,5,7,10],'7sus4'],[[0,4,7,9],'6'],[[0,3,7,9],'m6'],[[0,4,7,2],'add9'],[[0,7],'5']];
+function chordName(mem){const ns=mem.map(noteInfo);if(!ns.length)return'';const pcs=[...new Set(ns.map(n=>n.pc))],bass=ns[ns.length-1];let best=null;
+ for(const r of ns){const iv=new Set(pcs.map(p=>(p-r.pc+12)%12));for(const [t,suf] of CH){const T=new Set(t);if(!t.every(x=>iv.has(x)))continue;const extra=[...iv].filter(x=>!T.has(x)).length;const sc=t.length*10-extra*15+(r.pc===bass.pc?3:0);if(!best||sc>best.sc)best={sc,txt:r.name+suf}}}
+ return best&&best.sc>0?best.txt:ns.map(n=>n.name).reverse().join('-')}
+function visL(l){const m=L.mode||'all';if(l.ch)return m==='chs'||m==='mels';if(m==='mel'||m==='mels')return!(l.gn>1);if(m==='chn')return l.gn>1;if(m==='chs')return false;return true}
+function lbText(l){if(l.custom!=null)return l.custom;if(l.ch)return chordName(l.mem);const cl=L.clef==='p'?(l.si%2?'f':'g'):L.clef,idx=(((cl==='g'?2:4)+l.step)%7+7)%7;let t=NM[L.not][idx];if(l.acc==='b')return t+'♭';if(l.acc==='#')return t+'♯';if(l.acc==='n')return t;
  const K=L.key==='auto'?(l.skey||0):+L.key;if(K>0&&SH.slice(0,K).includes(idx))t+='♯';if(K<0&&FL.slice(0,-K).includes(idx))t+='♭';return t}
-function layout(p){for(const l of p.lb){if(l.moved)continue;const y=L.pos==='staff'?Math.max(l.bot+1.3*l.d,l.low+.9*l.d)+l.stack*l.sz*L.sz*1.05:l.cy+.6*l.d;l.y=y/p.h}}
+function layout(p){for(const l of p.lb){if(l.moved)continue;if(l.ch){l.y=(Math.min(l.top-1.4*l.d,l.bot-5.2*l.d)-l.sz*L.sz)/p.h;continue}const y=L.pos==='staff'?Math.max(l.bot+1.3*l.d,l.low+.9*l.d)+l.stack*l.sz*L.sz*1.05:l.cy+.6*l.d;l.y=y/p.h}}
 function fillHoles(M,W,H,d,bad){const N=W*H,lab=new Int32Array(N),st=new Int32Array(N),mx=.8*d*d,mn=.04*d*d,good=[0];let id=0;
  const vrun=(x,y,dy)=>{let n=0;while(y>=0&&y<H&&M[y*W+x]){n++;y+=dy}return n};
  const vrunW=(x,y,dy)=>{let n=0;while(y>=0&&y<H&&x>0&&x<W-1){if(M[y*W+x]){}else if(M[y*W+x-1])x--;else if(M[y*W+x+1])x++;else break;n++;y+=dy}return[n,x]};
@@ -379,6 +390,8 @@ function analyze(p){const W=p.w,H=p.h,src=p.bg.getContext('2d').getImageData(0,0
    if((best.fi<.78&&!(best.fi>=.6&&best.fo<=.2&&best.fs<=.12))||best.fs>.35||(best.fo>.4&&!(best.fi>.85&&best.fs<.2))){DB.r='vh';continue}
    {const cd=(x,y)=>box(x-1,y-1,3,3)>.5,A=d*.62,Bv=d*.36;if(cd(best.x-A,best.y-Bv)&&cd(best.x+A,best.y-Bv)&&cd(best.x-A,best.y+Bv)&&cd(best.x+A,best.y+Bv)){DB.r='rest';continue}}
    if(best.x>x1-d*1.2){DB.r='bar';continue}
+   {const vc=o=>run(best.x+o*d,best.y,0,-1)+run(best.x+o*d,best.y,0,1)-1,vs=[-.3,0,.3].map(vc),hs=[-.15,0,.15].map(o=>run(best.x,best.y+o*d,-1,0)+run(best.x,best.y+o*d,1,0)-1);
+    const yb4=LY(S,4,best.x)-y0,hs8=(yb4-(LY(S,0,best.x)-y0))/8,qs=(yb4-best.y)/hs8,fr=Math.abs(qs-Math.round(qs));if(Math.max(...vs)-Math.min(...vs)<=2&&Math.max(...vs)<=d*.8&&hs[1]>=d*1.1&&fr>=.28){DB.r='rest';continue}}
    {let rest=false;for(const dir of [-1,1]){const yr=Math.round(best.y+dir*d*.8);if(yr<0||yr>=bh)continue;let x=Math.round(best.x-d*.55);const xe2=Math.round(best.x+d*.55);
      while(x<=xe2){if(!M[yr*W+x]){x++;continue}let e=x;while(e+1<W&&M[yr*W+e+1])e++;const w=e-x+1,sc=(x+e)/2;
       if(w>=d*.25&&w<=d*.8&&Math.abs(sc-best.x)<d*.4){const y2=Math.round(best.y+dir*d*1.25);if(y2>=0&&y2<bh){for(let k=Math.round(sc-d*.4);k<=Math.round(sc+d*.4);k++)if(M[y2*W+k]){rest=true;break}}}x=e+1}}
@@ -415,7 +428,8 @@ function analyze(p){const W=p.w,H=p.h,src=p.bg.getContext('2d').getImageData(0,0
  p.lb=[];const bySt={};notes.forEach(n=>(bySt[n.si]=bySt[n.si]||[]).push(n));
  for(const k in bySt){const ns=bySt[k].sort((a,b)=>a.x-b.x);let g=[];
   const flush=()=>{if(!g.length)return;g.sort((a,b)=>a.cy-b.cy);const low=g[g.length-1].cy,gx=g.reduce((s,n)=>s+n.x,0)/g.length;
-   g.forEach((n,i)=>p.lb.push({k:'l',si:n.si,step:n.step,x:(L.pos==='staff'?gx:n.x)/W,cy:n.cy,bot:n.bot,d:n.d,low,stack:i,sz:n.d*1.1,acc:n.acc,skey:n.skey,custom:null,moved:false,y:0}));g=[]};
+   const gid=++GID,mem=[];g.forEach((n,i)=>{const o={k:'l',si:n.si,step:n.step,x:(L.pos==='staff'?gx:n.x)/W,cy:n.cy,bot:n.bot,d:n.d,low,stack:i,sz:n.d*1.1,acc:n.acc,skey:n.skey,custom:null,moved:false,y:0,g:gid,gn:g.length};mem.push(o);p.lb.push(o)});
+   if(g.length>1)p.lb.push({k:'l',ch:true,mem,si:g[0].si,x:gx/W,top:g[0].cy,bot:g[0].bot,d:g[0].d,sz:g[0].d*1.25,custom:null,moved:false,y:0,g:gid,gn:g.length});g=[]};
   for(const n of ns){if(g.length&&Math.abs(n.x-g[0].x)>n.bw*.6)flush();g.push(n)}flush()}
  layout(p);p._dbg={lt:staves.map(S=>S.t.toFixed(1)).join(','),st:staves.map(S=>S.pts.map(q=>[q.xc,q.ys.map(Math.round).join('/')]).join(' ')),staves:staves.length,skew:t,th};return p.lb.length}
 async function runAn(all){if(!S.pages.length)return toast('Prima importa uno spartito');select(null);toast('Analizzo i pentagrammi…',0);await wait(60);let n=0;
@@ -423,16 +437,16 @@ async function runAn(all){if(!S.pages.length)return toast('Prima importa uno spa
  toast(n?`Ho scritto ${n} note. Tocca un nome per correggerlo.`:'Non trovo pentagrammi: prova con un\'immagine più dritta e nitida',4500)}
 $('anCur').onclick=()=>runAn(false);$('anAll').onclick=()=>runAn(true);
 $('nClr').onclick=()=>{if(!S.pages.length)return;S.pages[S.cur].lb=[];select(null);render()};
-const nUpd=async()=>{L.not=$('nNot').value;L.clef=$('nClef').value;L.key=$('nKey').value==='auto'?'auto':+$('nKey').value;L.pos=$('nPos').value;L.font=$('nFont').value;L.col=$('nCol').value;L.bold=$('nBold').checked;L.sz=$('nSz').value/100;$('nSzV').textContent=$('nSz').value+'%';
+const nUpd=async()=>{L.mode=$('nMode').value;L.not=$('nNot').value;L.clef=$('nClef').value;L.key=$('nKey').value==='auto'?'auto':+$('nKey').value;L.pos=$('nPos').value;L.font=$('nFont').value;L.col=$('nCol').value;L.bold=$('nBold').checked;L.sz=$('nSz').value/100;$('nSzV').textContent=$('nSz').value+'%';
  S.pages.forEach(layout);render();await document.fonts.load(`700 30px "${L.font}"`).catch(()=>{});render()};
-['nNot','nClef','nKey','nPos','nFont','nCol','nBold','nSz'].forEach(i=>{$(i).oninput=nUpd;$(i).onchange=nUpd});
+['nMode','nNot','nClef','nKey','nPos','nFont','nCol','nBold','nSz'].forEach(i=>{$(i).oninput=nUpd;$(i).onchange=nUpd});
 
 /* ---------- salvataggio ---------- */
 async function compose(p,white){await document.fonts.load(`${L.bold?700:400} 40px "${L.font}"`).catch(()=>{});const c=mk(p.w,p.h),x=c.getContext('2d');
  if(white){x.fillStyle='#fff';x.fillRect(0,0,p.w,p.h)}x.drawImage(p.bg,0,0);
  for(const s of p.st){const w=s.w*p.w,h=w*s.c.height/s.c.width;x.save();x.translate(s.x*p.w+w/2,s.y*p.h+h/2);x.rotate(s.rot*Math.PI/180);x.drawImage(s.c,-w/2,-h/2,w,h);x.restore()}
  x.textAlign='center';x.textBaseline='top';x.fillStyle=L.col;
- for(const l of p.lb){x.font=`${L.bold?700:400} ${l.sz*L.sz}px "${L.font}"`;x.fillStyle=l.col||L.col;x.fillText(lbText(l),l.x*p.w,l.y*p.h)}
+ for(const l of p.lb){if(!visL(l))continue;x.font=`${L.bold?700:400} ${l.sz*L.sz}px "${L.font}"`;x.fillStyle=l.col||L.col;x.fillText(lbText(l),l.x*p.w,l.y*p.h)}
  return c}
 async function build(){const fmt=$('fmt').value,white=$('white').checked||fmt==='jpg',pages=$('pgs').value==='all'?S.pages:[S.pages[S.cur]],out=[];
  if(fmt==='pdf'){const {jsPDF}=window.jspdf;let doc;
